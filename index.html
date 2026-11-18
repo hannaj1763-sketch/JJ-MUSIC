@@ -916,8 +916,10 @@ function wav(buf) {
   for (let i = 0; i < n; i++) for (let c = 0; c < ch; c++) { const v = Math.max(-1, Math.min(1, data[c][i])); dv.setInt16(o, v < 0 ? v * 0x8000 : v * 0x7fff, true); o += 2; }
   return dv.buffer;
 }
-function download(url, name) {
-  if (window.AtelierApp && window.AtelierApp.saveFile && url.startsWith('data:')) { window.AtelierApp.saveFile(url, name); return; }
+async function download(url, name) {
+  if (url.startsWith('blob:')) url = await new Promise(res => fetch(url).then(r => r.blob()).then(bl => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(bl); }));
+  if (window.parent !== window) { try { window.parent.postMessage({ jjmusic: 'save', data: url, name }, '*'); return; } catch (e) {} }   // AGJJ 앱 안: 앱이 대신 저장
+  if (window.AtelierApp && window.AtelierApp.saveFile) { window.AtelierApp.saveFile(url, name); return; }
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
 window.addEventListener('resize', () => { if (cur && $('fx') && !playing) { sizeFx(); drawPath(-1); } });
