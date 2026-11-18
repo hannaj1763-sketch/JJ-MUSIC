@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>J.J Color Music · 그림이 노래해요</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #0d1117; --panel: #161b22; --line: rgba(255,255,255,.1); --text: #e6edf3; --sub: #8b949e; --gold: #e6c294; --accent: #cda26e; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; -webkit-tap-highlight-color: transparent; }
+  header { text-align: center; padding: 22px 16px 8px; }
+  header h1 { font-size: 22px; font-weight: 900; letter-spacing: .5px; }
+  header h1 span { color: var(--gold); }
+  header p { font-size: 13px; color: var(--sub); margin-top: 4px; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 40px; }
+
+  /* 작품 고르기 */
+  .picks { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 12px; scrollbar-width: none; }
+  .picks::-webkit-scrollbar { display: none; }
+  .pick { flex: 0 0 64px; height: 64px; border-radius: 12px; overflow: hidden; border: 2px solid transparent; cursor: pointer; background: #222; opacity: .6; transition: .2s; }
+  .pick.on { border-color: var(--gold); opacity: 1; }
+  .pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* 그림 + 선 악보 */
+  .stage { position: relative; border-radius: 16px; overflow: hidden; background: #000; box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+  .stage img { display: block; width: 100%; height: auto; transition: filter .6s; }
+  .stage.playing img { filter: brightness(.62) saturate(.85); }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .now { position: absolute; left: 12px; top: 12px; background: rgba(0,0,0,.55); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 700; display: none; align-items: center; gap: 6px; }
+  .now i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .stage.playing .now { display: flex; }
+  .title { margin: 14px 2px 2px; font-size: 18px; font-weight: 700; }
+  .meta { font-size: 12.5px; color: var(--sub); margin: 0 2px; }
+
+  /* 악기 */
+  .sec { margin-top: 18px; font-size: 13px; color: var(--accent); font-weight: 700; }
+  .insts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .inst { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 14px; cursor: pointer; font-family: inherit; }
+  .inst.rec::after { content: ' 추천'; font-size: 10px; color: var(--gold); }
+  .inst.on { background: var(--gold); color: #0d1117; border-color: var(--gold); font-weight: 700; }
+  .inst.on.rec::after { color: #5b4321; }
+  .more { background: none; border: none; color: var(--sub); font-size: 12px; cursor: pointer; padding: 9px 4px; font-family: inherit; }
+
+  .ctrl { display: flex; gap: 8px; margin-top: 16px; }
+  .btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn.play { background: linear-gradient(135deg, var(--accent), var(--gold)); color: #0d1117; flex: 2; }
+  .btn.sub { background: var(--panel); color: var(--text); border: 1px solid var(--line); font-size: 14px; }
+  .btn:disabled { opacity: .45; }
+  .bar { height: 4px; background: var(--line); border-radius: 4px; margin-top: 12px; overflow: hidden; }
+  .bar div { height: 100%; width: 0; background: var(--gold); }
+
+  /* 공식 */
+  details { margin-top: 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  summary { cursor: pointer; font-weight: 700; font-size: 14px; }
+  .rule { font-size: 12.5px; color: var(--sub); line-height: 1.7; margin-top: 8px; }
+  .rule b { color: var(--text); }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  th, td { padding: 6px 4px; text-align: center; border-bottom: 1px solid var(--line); }
+  th { color: var(--sub); font-weight: 400; font-size: 11.5px; }
+  td.c { text-align: left; white-space: nowrap; }
+  td.c i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
+  footer { text-align: center; font-size: 11px; color: #6e7681; margin-top: 26px; line-height: 1.7; }
+  .loading { text-align: center; color: var(--sub); padding: 60px 0; font-size: 14px; }
+
+  /* 앱 안에 넣을 때 (?embed=1) */
+  body.embed header, body.embed .picks, body.embed footer, body.embed details { display: none; }
+  body.embed .wrap { padding-top: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎨 J.J <span>Color Music</span></h1>
+  <p>그림의 색이 음이 되어 노래해요 · 같은 그림은 언제나 같은 노래</p>
+</header>
+<div class="wrap">
+  <div class="picks" id="picks"></div>
+  <div id="main"><div class="loading">그림을 불러오는 중…</div></div>
+
+  <details>
+    <summary>🎼 색이 음이 되는 공식</summary>
+    <div class="rule">
+      그림을 약 8×8칸으로 나누고, 왼쪽 위에서부터 뱀처럼 지그재그로 한 칸씩 읽어요. 한 칸은 반 박이에요.<br>
+      · <b>색(무지개 7색) → 음 이름</b> · <b>채도 → ♭/♯</b> (30% 아래는 ♭, 85% 위는 ♯)<br>
+      · <b>밝기 → 높낮이</b> (어두우면 낮은 옥타브, 밝으면 높은 옥타브)<br>
+      · <b>그 칸에서 색이 차지한 넓이 → 소리 크기</b><br>
+      · <b>흰 종이 → 쉼표</b> (길게 이어지면 짧게 줄여요) · <b>회색(연필·먹 번짐) → 밝기 7단계로 도~시</b> · <b>검정 → 바로 앞 음을 낮게(베이스)</b><br>
+      · 칸의 6% 이상 칠해져 있으면 그림이 있는 칸으로 봐요 (흰 종이 위 작은 그림도 노래해요)<br>
+      · <b>같은 음이 이어지면</b> 길게 끌어요 (최대 2박)<br>
+      · <b>빠르기</b> = 그림 전체 밝기 (밝을수록 빠르게) · <b>반주</b> = 마디마다 가장 긴 음을 바닥음으로, 따뜻한 색(빨·주·노)은 장화음, 차가운 색(파·남·보)은 단화음, 초록은 sus 화음
+    </div>
+    <table id="ruleTable"></table>
+  </details>
+
+  <footer>그림 © J.J (장예성) · 색-음 공식과 연주 엔진 © AGJJ 아그짜<br>그림과 음악을 허락 없이 상업적으로 쓸 수 없어요.</footer>
+</div>
+
+<script>
+// ===================================================================
+//  J.J Color Music — 그림의 색으로 곡을 만드는 공식 + 연주 엔진
+//  작품은 gallery2026 저장소에서 가져와요 (웹에서는 무료 로비 작품만 목록에 보여요)
+//  ?art=25 : 그 작품 바로 열기 · &inst=flute : 악기 · &embed=1 : 앱 안에 넣을 때(제목·목록 숨김)
+// ===================================================================
+const SRC = 'https://raw.githubusercontent.com/hannaj1763-sketch/gallery2026/main/';
+const Q = new URLSearchParams(location.search);
+if (Q.get('embed')) document.body.classList.add('embed');
+const $ = id => document.getElementById(id);
+
+// ----- 색 → 음 공식 -----
+const COLORS = [   // 무지개 7색 · 색상환 각도 범위 · 음 (도레미파솔라시)
+  { ko: '빨강', from: 345, to: 15,  pc: 0,  name: '도', sw: '#e53935', warm: 1 },
+  { ko: '주황', from: 15,  to: 40,  pc: 2,  name: '레', sw: '#fb8c00', warm: 1 },
+  { ko: '노랑', from: 40,  to: 70,  pc: 4,  name: '미', sw: '#fdd835', warm: 1 },
+  { ko: '초록', from: 70,  to: 165, pc: 5,  name: '파', sw: '#43a047', warm: 0 },
+  { ko: '파랑', from: 165, to: 225, pc: 7,  name: '솔', sw: '#1e88e5', warm: -1 },
+  { ko: '남색', from: 225, to: 260, pc: 9,  name: '라', sw: '#3949ab', warm: -1 },
+  { ko: '보라', from: 260, to: 345, pc: 11, name: '시', sw: '#8e24aa', warm: -1 },
+];
+const FLAT_S = 0.30, SHARP_S = 0.85;        // 채도 기준
+const GRID = 8, CELL_BEAT = 0.5, MAX_TIE = 2, MAX_REST = 1;
+
+function rgb2hsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d) { if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+  return [h, mx ? d / mx : 0, mx];
+}
+function colorIndex(h) { return COLORS.findIndex(c => c.from > c.to ? (h >= c.from || h < c.to) : (h >= c.from && h < c.to)); }
+// 픽셀 하나의 종류: 0~6 무지개 색 / 'w' 흰 종이 / 'g' 회색(연필·먹물 번짐) / 'k' 검정
+let PAPER = 0.82;            // 종이 밝기 기준 (그림마다 사진 밝기가 달라서 자동으로 맞춰요)
+function classify(h, s, v) { if (v < 0.2) return 'k'; if (s < 0.16) return v > PAPER ? 'w' : 'g'; return colorIndex(h); }
+const MIN_SHARE = 0.06;      // 칸의 6% 이상 칠해져 있으면 '그림이 있는 칸' (흰 종이 위 작은 그림도 노래해요)
+
+// 그림 → 칸 목록 (뱀처럼 지그재그)
+function analyze(img) {
+  const W = 240, H = Math.round(W * img.naturalHeight / img.naturalWidth);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, W, H);
+  const px = g.getImageData(0, 0, W, H).data;
+  // 종이 찾기: 무채색 픽셀 밝기의 60% 지점 - 0.1 보다 밝으면 '종이'
+  const gv = [];
+  for (let i = 0; i < px.length; i += 4 * 7) { const [, ss, vv] = rgb2hsv(px[i], px[i + 1], px[i + 2]); if (ss < 0.16 && vv >= 0.2) gv.push(vv); }
+  gv.sort((a, b) => a - b);
+  PAPER = gv.length > 50 ? Math.min(0.9, Math.max(0.55, gv[Math.floor(gv.length * 0.6)] - 0.1)) : 0.82;
+  const cols = GRID, rows = Math.max(8, Math.min(11, Math.round(GRID * H / W)));
+  const cw = W / cols, ch = H / rows, cells = [];
+  let sumV = 0, n = 0; const area = {};
+  for (let r = 0; r < rows; r++) {
+    const order = r % 2 ? [...Array(cols).keys()].reverse() : [...Array(cols).keys()];
+    for (const c of order) {
+      const bins = {};
+      for (let y = Math.floor(r * ch); y < Math.floor((r + 1) * ch); y += 2) for (let x = Math.floor(c * cw); x < Math.floor((c + 1) * cw); x += 2) {
+        const i = (y * W + x) * 4, [hh, ss, vv] = rgb2hsv(px[i], px[i + 1], px[i + 2]), k = classify(hh, ss, vv);
+        const b = bins[k] || (bins[k] = { n: 0, s: 0, v: 0, x: 0, y: 0, r: 0, g: 0, b: 0 });
+        b.n++; b.s += ss; b.v += vv; b.x += x; b.y += y; b.r += px[i]; b.g += px[i + 1]; b.b += px[i + 2];
+        sumV += vv; n++;
+      }
+      // 주인공 정하기: ① 무지개 색이 6% 이상이면 가장 넓은 색 ② 아니면 회색·검정 중 넓은 쪽 ③ 둘 다 아니면 흰 종이(쉼표)
+      let tot = 0; Object.values(bins).forEach(b => tot += b.n);
+      const big = ks => ks.filter(k => bins[k] && bins[k].n / tot >= MIN_SHARE).sort((a, b) => bins[b].n - bins[a].n)[0];
+      const best = big(['0', '1', '2', '3', '4', '5', '6']) || big(['g', 'k']) || 'w';
+      const b = bins[best] || { n: 1, s: 0, v: 1, x: 0, y: 0, r: 255, g: 255, b: 255 };
+      if (!bins[best]) { b.x = (c + .5) * cw; b.y = (r + .5) * ch; }
+      const cell = { kind: isNaN(best) ? best : Number(best), frac: b.n / tot, s: b.s / b.n, v: b.v / b.n,
+        x: (b.x / b.n) / W, y: (b.y / b.n) / H, col: `rgb(${Math.round(b.r / b.n)},${Math.round(b.g / b.n)},${Math.round(b.b / b.n)})` };
+      cells.push(cell);
+      if (typeof cell.kind === 'number') area[cell.kind] = (area[cell.kind] || 0) + 1;
+    }
+  }
+  return { cells, cols, rows, bright: sumV / n, area };
+}
+
+const SOLFA = ['도', '도♯', '레', '레♯', '미', '파', '파♯', '솔', '솔♯', '라', '라♯', '시'];
+// 칸 → 음
+function cellNote(cell) {
+  const C = COLORS[cell.kind];
+  const acc = cell.s < FLAT_S ? -1 : cell.s > SHARP_S ? 1 : 0;
+  const oct = cell.v < 0.45 ? 4 : cell.v < 0.8 ? 5 : 6;
+  return { midi: 12 * (oct + 1) + C.pc + acc, name: C.name + (acc < 0 ? '♭' : acc > 0 ? '♯' : ''), warm: C.warm };
+}
+
+// 칸 목록 → 곡 (멜로디는 100% 색에서, 박자·반주만 공식 틀)
+function compose(an) {
+  const bpm = Math.round(84 + 40 * Math.min(1, an.bright));   // 밝을수록 빠르게
+  const ev = [], path = [];
+  let t = 0, last = null, lastMidi = 60;
+  for (const cell of an.cells) {
+    if (cell.kind === 'w') {                              // 쉼표 (길게 이어지면 최대 1박)
+      if (last && last.rest && last.dur >= MAX_REST) { path.push({ t, cell, rest: true }); continue; }
+      if (last && last.rest) { last.dur += CELL_BEAT; } else { last = { rest: true, t, dur: CELL_BEAT }; }
+      path.push({ t, cell, rest: true }); t += CELL_BEAT; continue;
+    }
+    let note;
+    if (cell.kind === 'g') {                              // 회색(연필) → 밝기 7단계로 도~시 (어두울수록 낮게)
+      const st = Math.max(0, Math.min(6, Math.floor((cell.v - 0.2) / Math.max(0.2, PAPER - 0.2) * 7)));
+      const pcs = [0, 2, 4, 5, 7, 9, 11], m = 60 + pcs[st];
+      note = { midi: m, name: ['도', '레', '미', '파', '솔', '라', '시'][st] + '(회색)', warm: 0 };
+    } else if (cell.kind === 'k') { const m = lastMidi - 12 >= 40 ? lastMidi - 12 : lastMidi; note = { midi: m - 12 < 36 ? m : m - 12, name: SOLFA[lastMidi % 12] + '(낮게)', warm: 0, bass: true }; }
+    else note = cellNote(cell);
+    const vel = 0.42 + 0.5 * Math.min(1, cell.frac * 1.6);
+    if (last && !last.rest && last.midi === note.midi && last.dur < MAX_TIE) { last.dur += CELL_BEAT; last.vel = Math.max(last.vel, vel); }
+    else { last = { t, midi: note.midi, dur: CELL_BEAT, vel, name: note.name, warm: note.warm, bass: note.bass }; ev.push(last); }
+    if (!note.bass) lastMidi = note.midi;
+    path.push({ t, cell, note });
+    t += CELL_BEAT;
+  }
+  // 짧은 그림(흰 여백이 많은 그림)은 한 번 더 노래해요 — 두 번째는 한 옥타브 높게
+  if (t * 60 / bpm < 15 && t > 0) {
+    const len = Math.ceil(t / 4) * 4;
+    ev.slice().forEach(e => ev.push({ ...e, t: e.t + len, midi: e.bass ? e.midi : e.midi + 12 }));
+    path.slice().forEach((q, i) => path.push({ ...q, t: q.t + len, restart: i === 0, note: q.note && { ...q.note, name: q.note.name } }));
+    t = len * 2;
+  }
+  const beats = Math.ceil(t / 4) * 4;
+  // 반주: 마디(4박)마다 가장 긴 음 = 바닥음, 따뜻한 색 장화음 / 차가운 색 단화음 / 초록 sus
+  const chords = [];
+  for (let bar = 0; bar < beats; bar += 4) {
+    const inBar = ev.filter(e => e.t >= bar && e.t < bar + 4 && !e.bass);
+    if (!inBar.length) { if (chords.length) chords.push({ ...chords[chords.length - 1], t: bar, soft: true }); continue; }
+    const top = inBar.reduce((a, b) => (b.dur * b.vel > a.dur * a.vel ? b : a));
+    const root = 48 + (top.midi % 12);
+    const third = top.warm > 0 ? 4 : top.warm < 0 ? 3 : 5;
+    chords.push({ t: bar, root, notes: [root, root + third, root + 7] });
+  }
+  return { bpm, ev, path, chords, beats, sec: beats * 60 / bpm };
+}
+
+// ----- 악기 (Web Audio로 직접 소리 만들기) -----
+const INST = {
+  musicbox: { ko: '오르골', e: '🎶' }, xylo: { ko: '실로폰', e: '🎵' }, toy: { ko: '장난감 피아노', e: '🧸' },
+  piano: { ko: '피아노', e: '🎹' }, marimba: { ko: '마림바', e: '🪵' }, bell: { ko: '종소리', e: '🔔' },
+  harp: { ko: '하프', e: '🪕' }, flute: { ko: '플루트', e: '🪈' }, strings: { ko: '현악기', e: '🎻' },
+};
+// 그림 색으로 악기 추천 (공식): 따뜻하고 밝으면 반짝이는 소리, 차가우면 부드러운 소리, 어두우면 무게 있는 소리
+function recommend(an) {
+  let warm = 0, cool = 0;
+  for (const [k, n] of Object.entries(an.area)) { const w = COLORS[k].warm; if (w > 0) warm += n; else if (w < 0) cool += n; }
+  if (an.bright < 0.55) return ['piano', 'bell', 'strings'];
+  if (warm >= cool * 1.3) return an.bright > 0.8 ? ['musicbox', 'xylo', 'toy'] : ['marimba', 'piano', 'xylo'];
+  if (cool > warm * 1.3) return ['harp', 'flute', 'strings'];
+  return ['musicbox', 'harp', 'marimba'];
+}
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+function env(ctx, g, t, peak, a, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
+function osc(ctx, type, f, t, end, dest) { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.connect(dest); o.start(t); o.stop(end); return o; }
+function play(ctx, out, inst, t, m, dur, vel) {
+  const f = hz(m), g = ctx.createGain(); g.connect(out);
+  const p = (type, mul, amp, d, a = 0.004) => { const gg = ctx.createGain(); gg.connect(g); env(ctx, gg, t, amp * vel, a, d); osc(ctx, type, f * mul, t, t + a + d + 0.05, gg); };
+  g.gain.value = 1;
+  switch (inst) {
+    case 'musicbox': p('sine', 2, .5, 1.6); p('sine', 2 * 3.01, .12, .5); break;
+    case 'xylo':     p('sine', 2, .55, .5); p('sine', 2 * 3.93, .16, .12); break;
+    case 'toy':      p('square', 1, .13, .45); p('sine', 2, .25, .35); break;
+    case 'marimba':  p('sine', 1, .6, .8); p('sine', 4, .12, .2); break;
+    case 'bell':     p('sine', 1, .35, 2.4); p('sine', 2.76, .15, 1.4); p('sine', 5.4, .07, .7); break;
+    case 'piano': { p('triangle', 1, .45, Math.min(2.4, dur + 1.2)); p('sine', 2, .12, .9); break; }
+    case 'harp': {
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(4000, t); lp.frequency.exponentialRampToValueAtTime(700, t + 1.2); lp.connect(g);
+      const gg = ctx.createGain(); gg.connect(lp); env(ctx, gg, t, .55 * vel, .003, 1.5); osc(ctx, 'triangle', f, t, t + 1.6, gg); break;
+    }
+    case 'flute': {
+      const gg = ctx.createGain(); gg.connect(g); const len = Math.max(.2, dur);
+      gg.gain.setValueAtTime(0.0001, t); gg.gain.exponentialRampToValueAtTime(.32 * vel, t + .06); gg.gain.setValueAtTime(.3 * vel, t + len); gg.gain.exponentialRampToValueAtTime(0.0001, t + len + .15);
+      const o = osc(ctx, 'sine', f, t, t + len + .2, gg); osc(ctx, 'triangle', f, t, t + len + .2, (() => { const h = ctx.createGain(); h.gain.value = .12; h.connect(gg); return h; })());
+      const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 5; lg.gain.value = f * 0.004; lfo.connect(lg); lg.connect(o.frequency); lfo.start(t + .15); lfo.stop(t + len + .2); break;
+    }
+    case 'strings': {
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800; lp.connect(g);
+      const gg = ctx.createGain(); gg.connect(lp); const len = Math.max(.25, dur);
+      gg.gain.setValueAtTime(0.0001, t); gg.gain.exponentialRampToValueAtTime(.16 * vel, t + .14); gg.gain.setValueAtTime(.15 * vel, t + len); gg.gain.exponentialRampToValueAtTime(0.0001, t + len + .35);
+      osc(ctx, 'sawtooth', f * 1.0035, t, t + len + .4, gg); osc(ctx, 'sawtooth', f * 0.9965, t, t + len + .4, gg); break;
+    }
+  }
+}
+// 반주 (부드러운 패드 + 베이스) — 악기와 상관없이 같은 소리
+function pad(ctx, out, t, notes, len, soft) {
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.connect(out);
+  const amp = soft ? .025 : .045;
+  notes.forEach(m => { const g = ctx.createGain(); g.connect(lp); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(amp, t + .3); g.gain.setValueAtTime(amp, t + len - .2); g.gain.exponentialRampToValueAtTime(0.0001, t + len + .3); osc(ctx, 'triangle', hz(m), t, t + len + .4, g); });
+  const b = ctx.createGain(); b.connect(out); env(ctx, b, t, soft ? .08 : .16, .01, 1.4); osc(ctx, 'sine', hz(notes[0] - 12), t, t + 1.5, b);
+}
+function schedule(ctx, out, song, inst, t0) {
+  const spb = 60 / song.bpm;
+  song.ev.forEach(e => play(ctx, out, e.bass ? (inst === 'flute' || inst === 'strings' ? inst : 'piano') : inst, t0 + e.t * spb, e.midi, e.dur * spb, e.bass ? e.vel * .8 : e.vel));
+  song.chords.forEach(c => pad(ctx, out, t0 + c.t * spb, c.notes, 4 * spb, c.soft));
+}
+function master(ctx) {   // 살짝 울림 (방 소리)
+  const out = ctx.createGain(); out.gain.value = .9;
+  const comp = ctx.createDynamicsCompressor(); out.connect(comp); comp.connect(ctx.destination);
+  const dl = ctx.createDelay(); dl.delayTime.value = .19; const fb = ctx.createGain(); fb.gain.value = .22; const wet = ctx.createGain(); wet.gain.value = .18;
+  out.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(comp);
+  return out;
+}
+
+// ----- 화면 -----
+let ART = [], cur = null, inst = null, actx = null, playing = null;
+const instKey = id => 'jjcm_inst_' + id;
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+async function loadList() {
+  let lobby = ['25', '15', '26', '12', '35', '21'];
+  try { const ex = await (await fetch(SRC + 'exhibitions.json', { cache: 'no-store' })).json(); if (ex.lobby && ex.lobby.length) lobby = ex.lobby; } catch (e) {}
+  const want = Q.get('art');
+  const ids = want && !lobby.includes(want) ? [want, ...lobby] : lobby;
+  ART = await Promise.all(ids.map(async id => {
+    let title = '작품 ' + id;
+    try { title = (await (await fetch(SRC + `artworks/${id}/note.json`)).json()).title || title; } catch (e) {}
+    return { id, title, src: SRC + `artworks/${id}/image.jpg` };
+  }));
+  $('picks').innerHTML = ART.map(a => `<div class="pick" data-id="${a.id}" onclick="openArt('${a.id}')"><img src="${a.src}" alt="" loading="lazy"></div>`).join('');
+  openArt(want && ART.find(a => a.id === want) ? want : (ART.find(a => a.id === '12') || ART[0]).id);
+}
+
+function openArt(id) {
+  stop();
+  const a = ART.find(x => x.id === id); if (!a) return;
+  document.querySelectorAll('.pick').forEach(p => p.classList.toggle('on', p.dataset.id === id));
+  $('main').innerHTML = `<div class="stage" id="stage"><img id="art" crossorigin="anonymous" alt=""><canvas id="fx"></canvas>
+      <div class="now" id="now"><i></i><span></span></div></div>
+    <div class="title">${a.title}</div><div class="meta" id="meta">색을 읽는 중…</div>
+    <div class="sec">🎹 악기 고르기</div><div class="insts" id="insts"></div>
+    <div class="ctrl"><button class="btn play" id="playBtn" onclick="toggle()" disabled>▶ 그림이 노래해요</button></div>
+    <div class="bar"><div id="prog"></div></div>
+    <div class="ctrl"><button class="btn sub" id="pngBtn" onclick="savePng()" disabled>🖼 선 악보 저장</button><button class="btn sub" id="wavBtn" onclick="saveWav()" disabled>🎧 소리 저장</button></div>`;
+  const img = $('art');
+  img.onload = () => {
+    const an = analyze(img), song = compose(an), rec = recommend(an);
+    cur = { a, an, song, rec };
+    inst = Q.get('inst') && INST[Q.get('inst')] ? Q.get('inst') : (store(instKey(id)) || rec[0]);
+    const notes = song.ev.filter(e => !e.bass).length;
+    $('meta').innerText = `${Math.round(song.sec)}초 · 빠르기 ${song.bpm} · 음 ${notes}개 · 쉼표·베이스 포함 ${an.cells.length}칸`;
+    renderInsts(false); sizeFx(); drawPath(-1);
+    $('playBtn').disabled = $('pngBtn').disabled = $('wavBtn').disabled = false;
+    if (Q.get('autoplay')) toggle();
+  };
+  img.onerror = () => { $('meta').innerText = '그림을 불러오지 못했어요.'; };
+  img.src = a.src;
+}
+function renderInsts(all) {
+  const keys = all ? Object.keys(INST) : [...new Set([...cur.rec, inst])];
+  $('insts').innerHTML = keys.map(k => `<button class="inst ${k === inst ? 'on' : ''} ${cur.rec.includes(k) ? 'rec' : ''}" onclick="pickInst('${k}')">${INST[k].e} ${INST[k].ko}</button>`).join('')
+    + (all ? '' : '<button class="more" onclick="renderInsts(true)">다른 악기 ›</button>');
+}
+function pickInst(k) {
+  inst = k; store(instKey(cur.a.id), k);
+  renderInsts(!cur.rec.includes(k) || document.querySelectorAll('.inst').length > 4);
+  try { parent.postMessage({ jjmusic: 'inst', art: cur.a.id, inst: k }, '*'); } catch (e) {}   // 앱에 알려 주기
+  if (playing) { stop(); toggle(); }
+}
+
+// 선 악보: 지나간 칸을 그 색의 빛나는 선으로 잇기
+let fx, fg;
+function sizeFx() { fx = $('fx'); const r = $('stage').getBoundingClientRect(), d = devicePixelRatio || 1; fx.width = r.width * d; fx.height = r.height * d; fg = fx.getContext('2d'); fg.setTransform(d, 0, 0, d, 0, 0); }
+function drawPath(upto, frac = 1, base, BW, BH) {
+  const W = BW || fx.width / (devicePixelRatio || 1), H = BH || fx.height / (devicePixelRatio || 1), P = cur.song.path, g = base || fg;
+  if (!base) g.clearRect(0, 0, W, H);
+  const k = W / 360;                                  // 저장할 때 큰 그림이면 선도 굵게
+  if (upto < 0) return;
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  for (let i = 1; i <= upto && i < P.length; i++) {
+    if (P[i].restart) continue;                      // 두 번째 노래는 처음 자리부터 다시 (선을 잇지 않음)
+    const A = P[i - 1].cell, B = P[i].cell, f = i === upto ? frac : 1;
+    const x1 = A.x * W, y1 = A.y * H, x2 = x1 + (B.x * W - x1) * f, y2 = y1 + (B.y * H - y1) * f;
+    const col = P[i].rest ? 'rgba(255,255,255,.35)' : P[i].cell.col;
+    g.shadowColor = col; g.shadowBlur = P[i].rest ? 0 : 10 * Math.max(1, k); g.strokeStyle = col;
+    g.lineWidth = (P[i].rest ? 1.2 : 2 + 4 * Math.min(1, P[i].cell.frac)) * Math.max(1, k);
+    if (P[i].rest) g.setLineDash([3 * Math.max(1, k), 5 * Math.max(1, k)]); else g.setLineDash([]);
+    g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  }
+  g.setLineDash([]); g.shadowBlur = 0;
+  // 음 자리마다 작은 점
+  for (let i = 0; i <= upto && i < P.length; i++) if (!P[i].rest) { const c = P[i].cell; g.fillStyle = '#fff'; g.beginPath(); g.arc(c.x * W, c.y * H, (P[i].note && P[i].note.bass ? 2 : 2.6) * Math.max(1, k), 0, 6.29); g.fill(); }
+}
+
+function toggle() {
+  if (playing) { stop(); return; }
+  actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+  actx.resume();
+  const out = master(actx), t0 = actx.currentTime + 0.15, song = cur.song, spb = 60 / song.bpm;
+  schedule(actx, out, song, inst, t0);
+  playing = { out, t0, end: t0 + song.beats * spb + 1.2 };
+  $('stage').classList.add('playing'); $('playBtn').innerText = '■ 멈추기';
+  const P = song.path;
+  const loop = () => {
+    if (!playing) return;
+    const beat = (actx.currentTime - t0) / spb;
+    let i = 0; while (i + 1 < P.length && P[i + 1].t <= beat) i++;
+    const next = P[i + 1], frac = next ? Math.min(1, Math.max(0, (beat - P[i].t) / Math.max(.01, next.t - P[i].t))) : 1;
+    drawPath(beat < 0 ? -1 : next ? i + 1 : i, next ? frac : 1);
+    const W = fx.width / (devicePixelRatio || 1), H = fx.height / (devicePixelRatio || 1);
+    if (beat >= 0) {
+      const c = P[i].cell, pulse = 6 + 3 * Math.sin(actx.currentTime * 14);
+      fg.fillStyle = P[i].rest ? 'rgba(255,255,255,.6)' : c.col; fg.shadowColor = '#fff'; fg.shadowBlur = 16;
+      fg.beginPath(); fg.arc(c.x * W, c.y * H, pulse, 0, 6.29); fg.fill(); fg.shadowBlur = 0;
+      const now = $('now'); now.querySelector('i').style.background = P[i].rest ? 'transparent' : c.col;
+      now.querySelector('span').innerText = P[i].rest ? '쉼표' : P[i].note.name + (typeof c.kind === 'number' ? ` · ${COLORS[c.kind].ko}` : '');
+    }
+    $('prog').style.width = Math.min(100, 100 * beat / song.beats) + '%';
+    if (actx.currentTime > playing.end) { finish(); return; }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+function stop() {
+  if (!playing) return;
+  try { playing.out.disconnect(); } catch (e) {}
+  playing = null;
+  const st = $('stage'); if (st) st.classList.remove('playing');
+  if ($('playBtn')) $('playBtn').innerText = '▶ 그림이 노래해요';
+}
+function finish() { stop(); drawPath(cur.song.path.length - 1); $('prog').style.width = '100%'; try { parent.postMessage({ jjmusic: 'done', art: cur.a.id, inst }, '*'); } catch (e) {} }
+
+// 저장: 그림 + 완성된 선 악보 (PNG)
+function savePng() {
+  const img = $('art'), W = img.naturalWidth, H = img.naturalHeight, s = Math.min(1, 1600 / Math.max(W, H));
+  const cv = document.createElement('canvas'); cv.width = Math.round(W * s); cv.height = Math.round(H * s);
+  const g = cv.getContext('2d'); g.filter = 'brightness(0.62) saturate(0.85)'; g.drawImage(img, 0, 0, cv.width, cv.height); g.filter = 'none';
+  drawPath(cur.song.path.length - 1, 1, g, cv.width, cv.height);
+  g.font = `700 ${Math.round(cv.width / 32)}px 'Noto Sans KR', sans-serif`; g.fillStyle = 'rgba(255,255,255,.85)'; g.textAlign = 'right';
+  g.fillText(`© J.J · J.J Color Music · ${INST[inst].ko}`, cv.width - 18, cv.height - 18);
+  download(cv.toDataURL('image/png'), `JJ_color_music_${cur.a.id}.png`);
+}
+// 저장: 소리 (WAV) — 같은 공식으로 조용히 한 번 더 연주해서 파일로
+async function saveWav() {
+  const b = $('wavBtn'); b.disabled = true; b.innerText = '만드는 중…';
+  const song = cur.song, len = song.beats * 60 / song.bpm + 2.5, sr = 44100;
+  const oc = new OfflineAudioContext(2, Math.ceil(len * sr), sr);
+  schedule(oc, master(oc), song, inst, 0.05);
+  const buf = await oc.startRendering();
+  download(URL.createObjectURL(new Blob([wav(buf)], { type: 'audio/wav' })), `JJ_color_music_${cur.a.id}_${inst}.wav`);
+  b.disabled = false; b.innerText = '🎧 소리 저장';
+}
+function wav(buf) {
+  const ch = buf.numberOfChannels, n = buf.length, dv = new DataView(new ArrayBuffer(44 + n * ch * 2));
+  const ws = (o, s) => [...s].forEach((c, i) => dv.setUint8(o + i, c.charCodeAt(0)));
+  ws(0, 'RIFF'); dv.setUint32(4, 36 + n * ch * 2, true); ws(8, 'WAVE'); ws(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, ch, true);
+  dv.setUint32(24, buf.sampleRate, true); dv.setUint32(28, buf.sampleRate * ch * 2, true); dv.setUint16(32, ch * 2, true); dv.setUint16(34, 16, true); ws(36, 'data'); dv.setUint32(40, n * ch * 2, true);
+  const data = [...Array(ch).keys()].map(c => buf.getChannelData(c)); let o = 44;
+  for (let i = 0; i < n; i++) for (let c = 0; c < ch; c++) { const v = Math.max(-1, Math.min(1, data[c][i])); dv.setInt16(o, v < 0 ? v * 0x8000 : v * 0x7fff, true); o += 2; }
+  return dv.buffer;
+}
+function download(url, name) {
+  if (window.AtelierApp && window.AtelierApp.saveFile && url.startsWith('data:')) { window.AtelierApp.saveFile(url, name); return; }
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+window.addEventListener('resize', () => { if (cur && $('fx') && !playing) { sizeFx(); drawPath(-1); } });
+
+// 공식 표
+$('ruleTable').innerHTML = '<tr><th>색</th><th>탁한 색 (♭)</th><th>보통</th><th>쨍한 색 (♯)</th></tr>' +
+  COLORS.map(c => `<tr><td class="c"><i style="background:${c.sw}"></i>${c.ko}</td><td>${c.name}♭</td><td>${c.name}</td><td>${c.name}♯</td></tr>`).join('') +
+  '<tr><td class="c"><i style="background:#fff"></i>흰 종이</td><td colspan="3">쉼표</td></tr><tr><td class="c"><i style="background:#9e9e9e"></i>회색</td><td colspan="3">밝기 7단계 → 도 레 미 파 솔 라 시 (어두울수록 낮게)</td></tr><tr><td class="c"><i style="background:#111;border:1px solid #444"></i>검정</td><td colspan="3">바로 앞 음을 낮게 (베이스)</td></tr>';
+
+loadList();
+</script>
+</body>
+</html>
