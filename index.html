@@ -28,6 +28,9 @@
   .stage img { display: block; width: 100%; height: auto; transition: filter .6s; }
   .stage.playing img { filter: brightness(.62) saturate(.85); }
   .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .stage.drawing canvas { pointer-events: auto; touch-action: none; cursor: crosshair; }
+  .stage.drawing { box-shadow: 0 0 0 2px var(--gold), 0 12px 40px rgba(0,0,0,.5); }
+  .hint { font-size: 12.5px; color: var(--gold); margin-top: 8px; min-height: 0; line-height: 1.6; }
   .now { position: absolute; left: 12px; top: 12px; background: rgba(0,0,0,.55); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 700; display: none; align-items: center; gap: 6px; }
   .now i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
   .stage.playing .now { display: flex; }
@@ -81,7 +84,9 @@
   <details>
     <summary>🎼 색이 음이 되는 공식</summary>
     <div class="rule">
-      그림을 약 8×8칸으로 나누고, 왼쪽 위에서부터 뱀처럼 지그재그로 한 칸씩 읽어요. 한 칸은 반 박이에요.<br>
+      그림을 가로 8칸으로 나누고, 고른 <b>길</b>을 따라 한 칸씩 읽어요. 한 칸은 반 박이에요.<br>
+      · <b>길</b>: 〰️ 지그재그(왼쪽 위부터 줄마다 방향 바꿔) · 🌀 나선형(테두리부터 시계 방향으로 가운데까지) · ↙️ 왼쪽 대각선 · ↘️ 오른쪽 대각선 · ✍️ 내 손으로(손가락이 지나간 칸 순서대로)<br>
+      · 같은 그림 + 같은 길 = 언제나 같은 노래<br>
       · <b>색(무지개 7색) → 음 이름</b> · <b>채도 → ♭/♯</b> (30% 아래는 ♭, 85% 위는 ♯)<br>
       · <b>밝기 → 높낮이</b> (어두우면 낮은 옥타브, 밝으면 높은 옥타브)<br>
       · <b>그 칸에서 색이 차지한 넓이 → 소리 크기</b><br>
@@ -145,11 +150,11 @@ function analyze(img) {
   gv.sort((a, b) => a - b);
   PAPER = gv.length > 50 ? Math.min(0.9, Math.max(0.55, gv[Math.floor(gv.length * 0.6)] - 0.1)) : 0.82;
   const cols = GRID, rows = Math.max(8, Math.min(11, Math.round(GRID * H / W)));
-  const cw = W / cols, ch = H / rows, cells = [];
+  const cw = W / cols, ch = H / rows, grid = [];
   let sumV = 0, n = 0; const area = {};
   for (let r = 0; r < rows; r++) {
-    const order = r % 2 ? [...Array(cols).keys()].reverse() : [...Array(cols).keys()];
-    for (const c of order) {
+    grid.push([]);
+    for (let c = 0; c < cols; c++) {
       const bins = {};
       for (let y = Math.floor(r * ch); y < Math.floor((r + 1) * ch); y += 2) for (let x = Math.floor(c * cw); x < Math.floor((c + 1) * cw); x += 2) {
         const i = (y * W + x) * 4, [hh, ss, vv] = rgb2hsv(px[i], px[i + 1], px[i + 2]), k = classify(hh, ss, vv);
@@ -165,11 +170,55 @@ function analyze(img) {
       if (!bins[best]) { b.x = (c + .5) * cw; b.y = (r + .5) * ch; }
       const cell = { kind: isNaN(best) ? best : Number(best), frac: b.n / tot, s: b.s / b.n, v: b.v / b.n,
         x: (b.x / b.n) / W, y: (b.y / b.n) / H, col: `rgb(${Math.round(b.r / b.n)},${Math.round(b.g / b.n)},${Math.round(b.b / b.n)})` };
-      cells.push(cell);
+      cell.r = r; cell.c = c;
+      grid[r].push(cell);
       if (typeof cell.kind === 'number') area[cell.kind] = (area[cell.kind] || 0) + 1;
     }
   }
-  return { cells, cols, rows, bright: sumV / n, area };
+  return { grid, cols, rows, bright: sumV / n, area };
+}
+
+// ----- 길: 어떤 순서로 칸을 읽을지 (길이 달라지면 노래도 달라져요) -----
+const PATHS = {
+  zigzag: { ko: '지그재그', e: '〰️' }, spiral: { ko: '나선형', e: '🌀' },
+  diagL: { ko: '왼쪽 대각선', e: '↙️' }, diagR: { ko: '오른쪽 대각선', e: '↘️' }, draw: { ko: '내 손으로', e: '✍️' },
+};
+function orderPath(an, mode, stroke) {
+  const { grid, rows, cols } = an, out = [];
+  const at = (r, c) => grid[r][c];
+  if (mode === 'spiral') {                       // 바깥 테두리부터 시계 방향으로 돌며 가운데로
+    let t = 0, b = rows - 1, l = 0, rr = cols - 1;
+    while (t <= b && l <= rr) {
+      for (let c = l; c <= rr; c++) out.push(at(t, c));
+      for (let r = t + 1; r <= b; r++) out.push(at(r, rr));
+      if (t < b) for (let c = rr - 1; c >= l; c--) out.push(at(b, c));
+      if (l < rr) for (let r = b - 1; r > t; r--) out.push(at(r, l));
+      t++; b--; l++; rr--;
+    }
+  } else if (mode === 'diagR') {                 // ↘ 방향 줄들: 오른쪽 위 모서리부터 왼쪽 아래까지, 줄마다 번갈아
+    let flip = false;
+    for (let k = cols - 1; k >= -(rows - 1); k--) {
+      const line = []; for (let r = 0; r < rows; r++) { const c = r + k; if (c >= 0 && c < cols) line.push(at(r, c)); }
+      out.push(...(flip ? line.reverse() : line)); flip = !flip;
+    }
+  } else if (mode === 'diagL') {                 // ↙ 방향 줄들: 왼쪽 위 모서리부터 오른쪽 아래까지, 줄마다 번갈아
+    let flip = false;
+    for (let k = 0; k <= rows + cols - 2; k++) {
+      const line = []; for (let r = 0; r < rows; r++) { const c = k - r; if (c >= 0 && c < cols) line.push(at(r, c)); }
+      out.push(...(flip ? line.reverse() : line)); flip = !flip;
+    }
+  } else if (mode === 'draw' && stroke && stroke.length) {   // 손가락이 지나간 칸 순서대로 (선은 손가락 자리 그대로)
+    let last = null;
+    for (const [x, y] of stroke) {
+      const r = Math.min(rows - 1, Math.max(0, Math.floor(y * rows))), c = Math.min(cols - 1, Math.max(0, Math.floor(x * cols)));
+      if (last && last.r === r && last.c === c) continue;
+      out.push({ ...at(r, c), x, y }); last = { r, c };
+      if (out.length >= 120) break;              // 너무 길면 120칸까지 (약 30초)
+    }
+  } else {                                       // 지그재그: 왼쪽 위부터 줄마다 방향을 바꿔
+    for (let r = 0; r < rows; r++) for (let i = 0; i < cols; i++) out.push(at(r, r % 2 ? cols - 1 - i : i));
+  }
+  return out;
 }
 
 const SOLFA = ['도', '도♯', '레', '레♯', '미', '파', '파♯', '솔', '솔♯', '라', '라♯', '시'];
@@ -182,11 +231,11 @@ function cellNote(cell) {
 }
 
 // 칸 목록 → 곡 (멜로디는 100% 색에서, 박자·반주만 공식 틀)
-function compose(an) {
+function compose(an, cells) {
   const bpm = Math.round(84 + 40 * Math.min(1, an.bright));   // 밝을수록 빠르게
   const ev = [], path = [];
   let t = 0, last = null, lastMidi = 60;
-  for (const cell of an.cells) {
+  for (const cell of cells) {
     if (cell.kind === 'w') {                              // 쉼표 (길게 이어지면 최대 1박)
       if (last && last.rest && last.dur >= MAX_REST) { path.push({ t, cell, rest: true }); continue; }
       if (last && last.rest) { last.dur += CELL_BEAT; } else { last = { rest: true, t, dur: CELL_BEAT }; }
@@ -295,7 +344,7 @@ function master(ctx) {   // 살짝 울림 (방 소리)
 }
 
 // ----- 화면 -----
-let ART = [], cur = null, inst = null, actx = null, playing = null;
+let ART = [], cur = null, inst = null, actx = null, playing = null, finished = false;
 const instKey = id => 'jjcm_inst_' + id;
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
 
@@ -320,23 +369,90 @@ function openArt(id) {
   $('main').innerHTML = `<div class="stage" id="stage"><img id="art" crossorigin="anonymous" alt=""><canvas id="fx"></canvas>
       <div class="now" id="now"><i></i><span></span></div></div>
     <div class="title">${a.title}</div><div class="meta" id="meta">색을 읽는 중…</div>
+    <div class="sec">🛤 길 고르기 <span style="color:var(--sub);font-weight:400">· 길이 달라지면 노래도 달라져요</span></div><div class="insts" id="paths"></div>
+    <div class="hint" id="hint"></div>
     <div class="sec">🎹 악기 고르기</div><div class="insts" id="insts"></div>
     <div class="ctrl"><button class="btn play" id="playBtn" onclick="toggle()" disabled>▶ 그림이 노래해요</button></div>
     <div class="bar"><div id="prog"></div></div>
     <div class="ctrl"><button class="btn sub" id="pngBtn" onclick="savePng()" disabled>🖼 선 악보 저장</button><button class="btn sub" id="wavBtn" onclick="saveWav()" disabled>🎧 소리 저장</button></div>`;
   const img = $('art');
   img.onload = () => {
-    const an = analyze(img), song = compose(an), rec = recommend(an);
-    cur = { a, an, song, rec };
+    const an = analyze(img), rec = recommend(an);
+    cur = { a, an, rec, song: null };
     inst = Q.get('inst') && INST[Q.get('inst')] ? Q.get('inst') : (store(instKey(id)) || rec[0]);
-    const notes = song.ev.filter(e => !e.bass).length;
-    $('meta').innerText = `${Math.round(song.sec)}초 · 빠르기 ${song.bpm} · 음 ${notes}개 · 쉼표·베이스 포함 ${an.cells.length}칸`;
-    renderInsts(false); sizeFx(); drawPath(-1);
-    $('playBtn').disabled = $('pngBtn').disabled = $('wavBtn').disabled = false;
+    let st = null; try { st = JSON.parse(store(strokeKey(id)) || 'null'); } catch (e) {}
+    cur.stroke = st;
+    const qp = Q.get('path');
+    const mode = qp && PATHS[qp] ? qp : (store(pathKey(id)) || 'zigzag');
+    renderInsts(false); sizeFx(); setupDraw();
+    setPath(mode === 'draw' && !st ? 'zigzag' : mode);
     if (Q.get('autoplay')) toggle();
   };
   img.onerror = () => { $('meta').innerText = '그림을 불러오지 못했어요.'; };
   img.src = a.src;
+}
+const pathKey = id => 'jjcm_path_' + id, strokeKey = id => 'jjcm_stroke_' + id;
+function renderPaths() {
+  $('paths').innerHTML = Object.entries(PATHS).map(([k, p]) => `<button class="inst ${k === cur.mode ? 'on' : ''}" onclick="setPath('${k}')">${p.e} ${p.ko}</button>`).join('');
+}
+function setPath(mode) {
+  stop();
+  cur.mode = mode; store(pathKey(cur.a.id), mode); renderPaths();
+  $('stage').classList.toggle('drawing', mode === 'draw');
+  if (mode === 'draw' && !cur.drawn) {
+    cur.drawn = cur.stroke;                     // 전에 그린 길이 있으면 그대로
+  }
+  if (mode === 'draw') {
+    $('hint').innerHTML = cur.stroke ? '✍️ 그림 위에 다시 그으면 새 길로 바뀌어요.' : '✍️ <b>그림 위에 손가락으로 길을 그어 주세요.</b> 지나간 색 순서대로 나만의 노래가 만들어져요.';
+    if (!cur.stroke) { cur.song = null; fg.clearRect(0, 0, fx.width, fx.height); $('meta').innerText = '길을 그리면 노래가 만들어져요'; enableBtns(false); return; }
+  } else $('hint').innerHTML = '';
+  build();
+  try { parent.postMessage({ jjmusic: 'path', art: cur.a.id, path: mode }, '*'); } catch (e) {}
+}
+function build() {
+  const cells = orderPath(cur.an, cur.mode, cur.stroke);
+  cur.song = compose(cur.an, cells);
+  const notes = cur.song.ev.filter(e => !e.bass).length;
+  $('meta').innerText = `${PATHS[cur.mode].e} ${PATHS[cur.mode].ko} 길 · ${Math.round(cur.song.sec)}초 · 빠르기 ${cur.song.bpm} · 음 ${notes}개`;
+  preview(); enableBtns(true);
+}
+function enableBtns(on) { ['playBtn', 'pngBtn', 'wavBtn'].forEach(id => $(id).disabled = !on); }
+// 연주 전: 길을 흐린 점선으로 미리 보여 주기
+function preview() {
+  const W = fx.width / (devicePixelRatio || 1), H = fx.height / (devicePixelRatio || 1), P = cur.song.path;
+  fg.clearRect(0, 0, W, H); fg.strokeStyle = 'rgba(255,255,255,.55)'; fg.lineWidth = 1.4; fg.setLineDash([4, 5]); fg.lineJoin = 'round';
+  fg.beginPath();
+  P.forEach((q, i) => { if (q.restart) return; const x = q.cell.x * W, y = q.cell.y * H; i ? fg.lineTo(x, y) : fg.moveTo(x, y); });
+  fg.stroke(); fg.setLineDash([]);
+  const s = P[0].cell; fg.fillStyle = '#fff'; fg.beginPath(); fg.arc(s.x * W, s.y * H, 5, 0, 6.29); fg.fill();
+}
+// 내 손으로 길 그리기
+function setupDraw() {
+  const cv = $('fx'); let pts = null;
+  const pos = e => { const r = cv.getBoundingClientRect(); return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))]; };
+  cv.addEventListener('pointerdown', e => {
+    if (cur.mode !== 'draw' || playing) return;
+    e.preventDefault(); cv.setPointerCapture(e.pointerId); pts = [pos(e)];
+    const W = fx.width / (devicePixelRatio || 1), H = fx.height / (devicePixelRatio || 1);
+    fg.clearRect(0, 0, W, H); fg.strokeStyle = '#fff'; fg.lineWidth = 3; fg.lineCap = fg.lineJoin = 'round'; fg.shadowColor = '#fff'; fg.shadowBlur = 8;
+    fg.beginPath(); fg.moveTo(pts[0][0] * W, pts[0][1] * H);
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!pts) return;
+    const p = pos(e), W = fx.width / (devicePixelRatio || 1), H = fx.height / (devicePixelRatio || 1);
+    pts.push(p); fg.lineTo(p[0] * W, p[1] * H); fg.stroke(); fg.beginPath(); fg.moveTo(p[0] * W, p[1] * H);
+  });
+  const end = () => {
+    if (!pts) return;
+    fg.shadowBlur = 0;
+    const cellsN = orderPath(cur.an, 'draw', pts).length;
+    if (cellsN < 6) { $('hint').innerHTML = '✍️ 조금 더 길게 그어 주세요. (그림 위를 여러 칸 지나가게)'; pts = null; return; }
+    cur.stroke = pts.map(([x, y]) => [Math.round(x * 1000) / 1000, Math.round(y * 1000) / 1000]); pts = null;
+    store(strokeKey(cur.a.id), JSON.stringify(cur.stroke));
+    $('hint').innerHTML = '✍️ 나만의 길로 노래가 만들어졌어요. 다시 그으면 새 길로 바뀌어요.';
+    build();
+  };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
 }
 function renderInsts(all) {
   const keys = all ? Object.keys(INST) : [...new Set([...cur.rec, inst])];
@@ -380,7 +496,7 @@ function toggle() {
   actx.resume();
   const out = master(actx), t0 = actx.currentTime + 0.15, song = cur.song, spb = 60 / song.bpm;
   schedule(actx, out, song, inst, t0);
-  playing = { out, t0, end: t0 + song.beats * spb + 1.2 };
+  playing = { out, t0, end: t0 + song.beats * spb + 1.2 }; finished = false;
   $('stage').classList.add('playing'); $('playBtn').innerText = '■ 멈추기';
   const P = song.path;
   const loop = () => {
@@ -410,7 +526,7 @@ function stop() {
   const st = $('stage'); if (st) st.classList.remove('playing');
   if ($('playBtn')) $('playBtn').innerText = '▶ 그림이 노래해요';
 }
-function finish() { stop(); drawPath(cur.song.path.length - 1); $('prog').style.width = '100%'; try { parent.postMessage({ jjmusic: 'done', art: cur.a.id, inst }, '*'); } catch (e) {} }
+function finish() { stop(); drawPath(cur.song.path.length - 1); finished = true; $('prog').style.width = '100%'; try { parent.postMessage({ jjmusic: 'done', art: cur.a.id, inst }, '*'); } catch (e) {} }
 
 // 저장: 그림 + 완성된 선 악보 (PNG)
 function savePng() {
@@ -419,8 +535,8 @@ function savePng() {
   const g = cv.getContext('2d'); g.filter = 'brightness(0.62) saturate(0.85)'; g.drawImage(img, 0, 0, cv.width, cv.height); g.filter = 'none';
   drawPath(cur.song.path.length - 1, 1, g, cv.width, cv.height);
   g.font = `700 ${Math.round(cv.width / 32)}px 'Noto Sans KR', sans-serif`; g.fillStyle = 'rgba(255,255,255,.85)'; g.textAlign = 'right';
-  g.fillText(`© J.J · J.J Color Music · ${INST[inst].ko}`, cv.width - 18, cv.height - 18);
-  download(cv.toDataURL('image/png'), `JJ_color_music_${cur.a.id}.png`);
+  g.fillText(`© J.J · J.J Color Music · ${PATHS[cur.mode].ko} 길 · ${INST[inst].ko}`, cv.width - 18, cv.height - 18);
+  download(cv.toDataURL('image/png'), `JJ_color_music_${cur.a.id}_${cur.mode}.png`);
 }
 // 저장: 소리 (WAV) — 같은 공식으로 조용히 한 번 더 연주해서 파일로
 async function saveWav() {
@@ -429,7 +545,7 @@ async function saveWav() {
   const oc = new OfflineAudioContext(2, Math.ceil(len * sr), sr);
   schedule(oc, master(oc), song, inst, 0.05);
   const buf = await oc.startRendering();
-  download(URL.createObjectURL(new Blob([wav(buf)], { type: 'audio/wav' })), `JJ_color_music_${cur.a.id}_${inst}.wav`);
+  download(URL.createObjectURL(new Blob([wav(buf)], { type: 'audio/wav' })), `JJ_color_music_${cur.a.id}_${cur.mode}_${inst}.wav`);
   b.disabled = false; b.innerText = '🎧 소리 저장';
 }
 function wav(buf) {
