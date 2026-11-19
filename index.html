@@ -52,6 +52,16 @@
   .btn.sub { background: var(--panel); color: var(--text); border: 1px solid var(--line); font-size: 14px; }
   .btn:disabled { opacity: .45; }
   .layers { margin-top: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .role { padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .role label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+  .role input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--gold); }
+  .role .rl-d { font-size: 11.5px; color: var(--sub); margin: 2px 0 6px 26px; }
+  .role .rl-c { display: flex; gap: 8px; align-items: center; margin-left: 26px; }
+  .role select { flex: 1; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 6px; font-family: inherit; font-size: 13px; }
+  .role .rl-fix { flex: 1; font-size: 13px; color: var(--text); }
+  .role input[type=range] { width: 90px; accent-color: var(--gold); }
+  .role.off { opacity: .45; }
+  .role.now b { color: var(--gold); text-shadow: 0 0 8px var(--gold); }
   .lay { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
   .lay b { color: var(--gold); width: 34px; flex-shrink: 0; }
   .lay span { flex: 1; min-width: 0; }
@@ -94,7 +104,11 @@
     <div class="rule">
       그림을 가로 8칸으로 나누고, 고른 <b>길</b>을 따라 한 칸씩 읽어요. 한 칸은 반 박이에요.<br>
       · <b>길</b>: 〰️ 지그재그(왼쪽 위부터 줄마다 방향 바꿔) · 🌀 나선형(테두리부터 시계 방향으로 가운데까지) · ↙️ 왼쪽 대각선 · ↘️ 오른쪽 대각선 · ✍️ 내 손으로(손가락이 지나간 칸 순서대로)<br>
-      · <b>곡 스타일</b>: 🎻 클래식 · 🧸 동요 · 🎹 발라드 · 🎤 K-pop 댄스 · 🎷 재즈 · ☕ 로파이 · 🪘 국악·민요 · 🎙️ 트로트 · 🧢 힙합 · 🎼 오케스트라 · 🥁 드럼 — 멜로디는 그대로 그림 색에서, 빠르기 범위·반주·드럼만 바뀌어요. 국악·민요는 멜로디를 5음 음계(도 레 미 솔 라)의 가까운 음으로 맞추고 장구 장단을 넣어요. 트로트는 트로트 음계(라 시 도 미 파)의 가까운 음으로 맞추고 쿵짝 리듬에 색소폰으로 연주해요. 오케스트라는 멜로디를 한 옥타브 위 악기가 함께 연주하고 현악 화음과 팀파니를 깔아요. 드럼은 음 이름이 드럼이 돼요 (도 킥 · 레 낮은 탐 · 미 가운데 탐 · 파 스네어 · 솔 높은 탐 · 라 하이햇 · 시 심벌, ♯ 세게 · ♭ 살살). 특정 노래를 흉내 내지 않고 장르의 일반적인 특징만 써요.<br>
+      · <b>곡 스타일</b>: 🎻 클래식 · 🧸 동요 · 🎹 발라드 · 🎤 K-pop 댄스 · 🎷 재즈 · ☕ 로파이 · 🪘 국악·민요 · 🎙️ 트로트 · 🧢 힙합 · 🎼 오케스트라 — 빠르기 범위, 반주를 치는 모양, 베이스, 드럼 장단이 바뀌어요. 특정 노래를 흉내 내지 않고 장르의 일반적인 특징만 써요.<br>
+      · <b>조(調)</b>: 그림에서 가장 넓은 색의 음이 으뜸음 · 따뜻한 색(빨·주·노)이 많으면 장조, 차가운 색(파·남·보)이 많으면 단조 (트로트는 단조, 국악은 장조)<br>
+      · <b>멜로디를 조에 맞추기</b>: 조에서 벗어난 음은 반음으로 바로 이어지는 짧은 음이면 '지나가는 음'으로 그대로, 아니면 가장 가까운 조 안의 음으로 (국악은 도 레 미 솔 라 5음, 트로트는 라 시 도 미 파 5음 느낌)<br>
+      · <b>화음 뼈대</b>: 마디마다 그 조의 화음(Ⅰ~Ⅶ) 중 멜로디 음과 가장 많이 겹치고 앞 화음에서 자연스럽게 이어지는 것 (Ⅰ→Ⅳ→Ⅴ→Ⅰ 처럼) · 처음은 Ⅰ, 끝은 Ⅴ→Ⅰ로 마침<br>
+      · <b>역할별로 쌓기</b>: 🎵 주 멜로디 · 🎶 화음 반주 · 🎸 베이스(화음 바닥음) · 🎻 어울림 멜로디(주 멜로디 3~9반음 아래의 화음 음) · 🥁 리듬(스타일 장단으로 박자 잡기) — 모두 같은 화음 뼈대를 따라가요<br>
       · <b>귀에 남게</b>: 멀리 뛰는 음은 같은 이름의 가까운 옥타브로 · 처음 2마디(첫 소절)를 끝에서 후렴처럼 한 번 더 부르고, 첫 음으로 길게 마무리 · 전체 30초 안으로<br>
       · 같은 그림 + 같은 길 + 같은 스타일 = 언제나 같은 노래<br>
       · <b>색(무지개 7색) → 음 이름</b> · <b>채도 → ♭/♯</b> (30% 아래는 ♭, 85% 위는 ♯)<br>
@@ -103,7 +117,7 @@
       · <b>흰 종이·검정 선 → 쉼표</b> (길게 이어지면 짧게 줄여요) · <b>회색(연필·먹 번짐) → 밝기 7단계로 도~시</b><br>
       · 칸의 6% 이상 칠해져 있으면 그림이 있는 칸으로 봐요 (흰 종이 위 작은 그림도 노래해요)<br>
       · <b>같은 음이 이어지면</b> 길게 끌어요 (최대 2박)<br>
-      · <b>빠르기</b> = 그림 전체 밝기 (밝을수록 빠르게) · <b>반주(왼손)</b> = 마디마다 가장 긴 음을 바닥음으로 펼침화음 (앞 마디와 같으면 그다음 긴 음), 따뜻한 색(빨·주·노)은 장화음, 차가운 색(파·남·보)은 단화음, 초록은 sus 화음
+      · <b>빠르기</b> = 그림 전체 밝기 (밝을수록 빠르게)
     </div>
     <table id="ruleTable"></table>
   </details>
@@ -258,8 +272,6 @@ function compose(an, cells, styleKey = 'classic', bpmFix) {
       const pcs = [0, 2, 4, 5, 7, 9, 11], m = 60 + pcs[st];
       note = { midi: m, name: ['도', '레', '미', '파', '솔', '라', '시'][st] + '(회색)', warm: 0 };
     } else note = cellNote(cell);
-    if (ST.penta) note = toPenta(note);              // 국악풍: 5음 음계(도 레 미 솔 라)로 가까운 음에
-    if (ST.trot) note = toTrot(note);                // 트로트풍: 라 시 도 미 파 음계로 (단조 느낌)
     const vel = 0.42 + 0.5 * Math.min(1, cell.frac * 1.6);
     if (last && !last.rest && last.midi === note.midi && last.dur < MAX_TIE) { last.dur += CELL_BEAT; last.vel = Math.max(last.vel, vel); }
     else { last = { t, midi: note.midi, dur: CELL_BEAT, vel, name: note.name, warm: note.warm, bass: note.bass }; ev.push(last); }
@@ -267,6 +279,9 @@ function compose(an, cells, styleKey = 'classic', bpmFix) {
     path.push({ t, cell, note });
     t += CELL_BEAT;
   }
+  // ⓪ 조(調) 맞추기: 그림에서 가장 넓은 색이 으뜸음, 따뜻한 색이 많으면 장조·차가운 색이 많으면 단조
+  const KEY = keyOf(an, styleKey);
+  fitToKey(ev, KEY);
   // ① 매끄럽게: 앞 음과 너무 멀리 뛰면 같은 음 이름의 가까운 옥타브로 (음 이름은 그대로)
   for (let i = 1; i < ev.length; i++) {
     const pv = ev[i - 1].midi;
@@ -299,20 +314,148 @@ function compose(an, cells, styleKey = 'classic', bpmFix) {
     t = end + 4;
   }
   const beats = Math.ceil(t / 4) * 4;
-  // 반주: 마디(4박)마다 가장 긴 음 = 바닥음, 따뜻한 색 장화음 / 차가운 색 단화음 / 초록 sus
-  const chords = [];
-  for (let bar = 0; bar < beats; bar += 4) {
-    const inBar = ev.filter(e => e.t >= bar && e.t < bar + 4 && !e.bass);
-    if (!inBar.length) { if (chords.length) chords.push({ ...chords[chords.length - 1], t: bar, soft: true }); continue; }
-    // 가장 긴 음이 바닥음 — 앞 마디와 같으면 그다음으로 긴 음 (같은 음만 계속 누르지 않게)
-    const ranked = inBar.slice().sort((a, b) => b.dur * b.vel - a.dur * a.vel);
-    const prev = chords.length ? chords[chords.length - 1].root % 12 : -1;
-    const top = ranked.find(e => e.midi % 12 !== prev) || ranked[0];
-    const root = 48 + (top.midi % 12);
-    const third = top.warm > 0 ? 4 : top.warm < 0 ? 3 : 5;
-    chords.push({ t: bar, root, notes: [root, root + third, root + 7] });
+  // 화음 뼈대: 마디마다 그 조의 화음(Ⅰ Ⅱ Ⅲ Ⅳ Ⅴ Ⅵ) 중 멜로디와 가장 잘 맞고, 앞 화음에서 자연스럽게 이어지는 것
+  const chords = chordPlan(ev, beats, KEY, ST);
+  return { bpm, ev, path, chords, beats, sec: beats * 60 / bpm, style: styleKey, key: KEY };
+}
+
+
+// ----- 화성: 조 정하기 · 멜로디를 조에 맞추기 · 화음 고르기 -----
+const SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10] };
+const KEYNAME = ['다', '올림다', '라', '내림마', '마', '바', '올림바', '사', '내림가', '가', '내림나', '나'];
+function keyOf(an, styleKey) {
+  let top = null, topN = -1, warm = 0, cool = 0;
+  for (const [k, n] of Object.entries(an.area)) { if (n > topN) { topN = n; top = +k; } const w = COLORS[k].warm; if (w > 0) warm += n; else if (w < 0) cool += n; }
+  const tonic = top == null ? 0 : COLORS[top].pc;
+  let mode = warm >= cool ? 'major' : 'minor';
+  if (styleKey === 'trot') mode = 'minor';
+  if (styleKey === 'gugak') mode = 'major';
+  const scale = SCALES[mode].slice();
+  // 멜로디에 쓸 음: 국악은 5음(1 2 3 5 6), 트로트는 5음(1 2 ♭3 5 ♭6), 나머지는 7음
+  const mel = styleKey === 'gugak' ? [0, 2, 4, 7, 9] : styleKey === 'trot' ? [0, 2, 3, 7, 8] : scale;
+  return { tonic, mode, scale, mel, name: KEYNAME[tonic] + (mode === 'major' ? '장조' : '단조'), color: top };
+}
+const pcOf = m => ((m % 12) + 12) % 12;
+// 조에서 벗어난 음: 반음으로 바로 옆 음에 이어지는 짧은 '지나가는 음'이면 그대로, 아니면 가장 가까운 조 안의 음으로 (아래쪽 우선)
+function fitToKey(ev, K) {
+  const inMel = m => K.mel.includes(pcOf(m - K.tonic));
+  ev.forEach((e, i) => {
+    if (inMel(e.midi)) return;
+    const nx = ev[i + 1];
+    if (e.dur <= 0.5 && nx && Math.abs(nx.midi - e.midi) <= 2 && inMel(nx.midi) && K.mel.length === 7) { e.passing = true; return; }
+    for (let d = 1; d < 6; d++) {
+      if (inMel(e.midi - d)) { e.midi -= d; break; }
+      if (inMel(e.midi + d)) { e.midi += d; break; }
+    }
+    e.name = SOLFA[pcOf(e.midi)] + ' (' + e.name + ')';
+  });
+}
+// 조의 화음: 음계 1·3·5번째 음을 쌓아요 (단조의 Ⅴ는 이끎음을 올린 장화음)
+function triad(K, deg) {
+  const sc = K.scale, n = i => sc[i % 7] + 12 * Math.floor(i / 7);
+  const notes = [n(deg), n(deg + 2), n(deg + 4)], sev = n(deg + 6);
+  if (K.mode === 'minor' && deg === 4) notes[1] += 1;   // 단조 Ⅴ: 솔-시-레 처럼 밝게 (끝맺음이 또렷하게)
+  const base = 48 + K.tonic;                       // 바닥음은 낮은 옥타브
+  let r = base + notes[0]; while (r > 59) r -= 12;
+  const sh = r - (base + notes[0]);
+  return { deg, root: r, notes: notes.map(x => base + x + sh), seventh: base + sev + sh };
+}
+// 화음이 자연스럽게 넘어가는 길 (Ⅰ→Ⅳ, Ⅳ→Ⅴ, Ⅴ→Ⅰ, Ⅵ→Ⅳ, Ⅱ→Ⅴ …)
+const NEXT_OK = { 0: [3, 4, 5, 1], 1: [4, 6], 2: [5, 3], 3: [4, 0, 1], 4: [0, 5], 5: [3, 1, 4], 6: [0, 2] };
+function chordPlan(ev, beats, K, ST) {
+  const bars = beats / 4, out = [];
+  const use = K.mode === 'minor' ? [0, 2, 3, 4, 5, 6] : [0, 1, 3, 4, 5, 2];
+  for (let b = 0; b < bars; b++) {
+    const t0 = b * 4, inBar = ev.filter(e => e.t >= t0 && e.t < t0 + 4 && !e.passing);
+    const prev = out.length ? out[out.length - 1].deg : null;
+    let deg;
+    if (b === 0) deg = 0;                                  // 처음은 Ⅰ
+    else if (b === bars - 1) deg = 0;                      // 끝은 Ⅰ (마침)
+    else if (b === bars - 2) deg = 4;                      // 끝 바로 앞은 Ⅴ
+    else {
+      let best = null, bestS = -1e9;
+      for (const d of use) {
+        const tri = triad(K, d), pcs = [...tri.notes, ...(ST.seventh ? [tri.seventh] : [])].map(pcOf);
+        let sc = 0;
+        inBar.forEach(e => { const w = e.dur * ((e.t - t0) % 2 === 0 ? 1.6 : 1); sc += pcs.includes(pcOf(e.midi)) ? w : -0.45 * w; });
+        if (prev != null && (NEXT_OK[prev] || []).includes(d)) sc += 0.7;
+        if (d === prev) sc -= 0.6;                         // 같은 화음만 계속 X
+        if (!inBar.length && prev != null) sc += (NEXT_OK[prev] || [])[0] === d ? 1 : 0;
+        if (sc > bestS) { bestS = sc; best = d; }
+      }
+      deg = best;
+    }
+    out.push({ t: t0, ...triad(K, deg) });
   }
-  return { bpm, ev, path, chords, beats, sec: beats * 60 / bpm, style: styleKey };
+  return out;
+}
+const ROMAN = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ'];
+
+// ----- 🎚 역할별로 쌓기: 주 멜로디 · 화음 반주 · 베이스 · 어울림 멜로디 · 리듬 -----
+const ROLES = {
+  melody: { ko: '주 멜로디', e: '🎵', d: '그림 색에서 나온 노래' },
+  chords: { ko: '화음 반주', e: '🎶', d: '화음을 펼쳐 치는 반주', opts: ['piano', 'guitar', 'harp', 'gayageum', 'marimba', 'musicbox', 'strings'] },
+  bass:   { ko: '베이스', e: '🎸', d: '화음의 바닥음을 낮게', opts: ['ubass', 'ebass', 'sbass', 'b808', 'cello'] },
+  harm:   { ko: '어울림 멜로디', e: '🎻', d: '주 멜로디의 3도·6도 아래를 따라가는 짝꿍', opts: ['violin', 'cello', 'flute', 'strings', 'haegeum', 'daegeum', 'sax', 'harmonica'] },
+  rhythm: { ko: '리듬', e: '🥁', d: '박자를 잡아 주는 드럼 (스타일마다 장단)' },
+};
+const ROLE_ORDER = ['melody', 'chords', 'bass', 'harm', 'rhythm'];
+// 스타일마다 기본 악기
+const STYLE_DEF = {
+  classic: { chords: 'piano', bass: 'cello', harm: 'violin' },   kids: { chords: 'piano', bass: 'ubass', harm: 'flute' },
+  ballad:  { chords: 'piano', bass: 'ubass', harm: 'strings' },  kpop: { chords: 'piano', bass: 'sbass', harm: 'flute' },
+  jazz:    { chords: 'piano', bass: 'ubass', harm: 'sax' },      lofi: { chords: 'piano', bass: 'ebass', harm: 'flute' },
+  gugak:   { chords: 'gayageum', bass: 'ubass', harm: 'haegeum' }, trot: { chords: 'guitar', bass: 'ebass', harm: 'harmonica' },
+  hiphop:  { chords: 'piano', bass: 'b808', harm: 'strings' },   orch: { chords: 'strings', bass: 'cello', harm: 'flute' },
+};
+// 화음 반주 · 베이스 음 만들기 (스타일마다 치는 모양) → [박 위치, 음, 길이, 세기]
+function chordEvents(song, ST) {
+  const out = [];
+  song.chords.forEach(c => {
+    const [r, th, fi] = c.notes, sv = c.seventh, t = c.t, add = (b, ms, d, v) => ms.forEach(m => out.push([t + b, m, d, v]));
+    switch (ST.acc) {
+      case 'alberti': [r, fi, th + 12, fi, r, fi, th + 12, fi].forEach((m, i) => add(i * .5, [m], .55, i % 4 ? .3 : .38)); break;   // 도-솔-미-솔
+      case 'oompah': [1, 3].forEach(b => add(b, [th, fi, r + 12], .45, .3)); break;                                          // 쿵-짝의 '짝'
+      case 'ballad': [r, fi, th + 12, fi + 12, r + 24, fi + 12, th + 12, fi].forEach((m, i) => add(i * .5, [m], 1.4, .26)); break;
+      case 'synth':  [.5, 1.5, 2.5, 3.5].forEach(b => add(b, [r + 12, th + 12, fi + 12], .25, .24)); break;                  // 엇박 찌르기
+      case 'walk':   [1, 3].forEach(b => add(b, [th, fi, sv], .7, .26)); break;
+      case 'rhodes': add(0, [r, th, fi, sv], 3.8, .22); break;
+      case 'drone':  add(0, [r, fi], 2, .26); add(2, [fi, r + 12], 2, .22); break;
+      case 'twobeat': [1, 3].forEach(b => add(b, [th + 12, fi + 12, r + 12], .3, .26)); break;
+      case 'boom808': add(0, [th, fi, sv], 1.5, .24); add(2.5, [th, fi, sv], .8, .2); break;
+      case 'orch':   add(0, [r, th, fi, r + 12], 4, .2); break;
+    }
+  });
+  return out;
+}
+function bassEvents(song, ST) {
+  const out = [];
+  song.chords.forEach((c, i) => {
+    const r = c.root - 12, fi = c.notes[2] - 12, t = c.t, nx = song.chords[i + 1] ? song.chords[i + 1].root - 12 : r;
+    switch (ST.bassPat) {
+      case 'half':  out.push([t, r, 1.9, .55], [t + 2, fi, 1.9, .5]); break;          // 쿵 - 쿵 (근음·5도)
+      case 'whole': out.push([t, r, 3.9, .55]); break;
+      case 'oct8':  for (let k = 0; k < 8; k++) out.push([t + k * .5, k % 2 ? r + 12 : r, .4, .5]); break;
+      case 'walk':  [r, c.notes[1] - 12, fi, nx + (nx > r ? -1 : 1)].forEach((m, k) => out.push([t + k, m, .9, .5])); break;   // 걷는 베이스
+      case 'sync':  out.push([t, r, 1.4, .55], [t + 2.5, r, 1, .45]); break;
+      case 'two':   out.push([t, r, .8, .55], [t + 2, fi, .8, .5]); break;
+    }
+  });
+  return out;
+}
+// 어울림 멜로디: 주 멜로디 음마다, 그 박의 화음 음 중에서 3~9반음 아래 가장 가까운 음
+function harmEvents(song) {
+  const out = [];
+  song.ev.forEach(e => {
+    const c = song.chords[Math.min(song.chords.length - 1, Math.floor(e.t / 4))]; if (!c) return;
+    const pcs = [...c.notes, c.seventh].map(pcOf);
+    let m = null; for (let d = 3; d <= 9; d++) if (pcs.includes(pcOf(e.midi - d))) { m = e.midi - d; break; }
+    if (m == null) return;
+    const last = out[out.length - 1];
+    if (last && last[1] === m && Math.abs(last[0] + last[2] - e.t) < .01 && last[2] < 2) last[2] += e.dur;     // 같은 음이 이어지면 길게
+    else out.push([e.t, m, e.dur, e.vel * .6]);
+  });
+  return out;
 }
 
 // ----- 악기 (Web Audio로 직접 소리 만들기) -----
@@ -321,7 +464,8 @@ const INST = {
   piano: { ko: '피아노', e: '🎹' }, marimba: { ko: '마림바', e: '🪵' }, bell: { ko: '종소리', e: '🔔' },
   harp: { ko: '하프', e: '🪕' }, flute: { ko: '플루트', e: '🪈' }, strings: { ko: '현악기', e: '🎻' },
   gayageum: { ko: '가야금', e: '🪕' }, daegeum: { ko: '대금', e: '🎋' }, sax: { ko: '색소폰', e: '🎷' },
-  harmonica: { ko: '하모니카', e: '🎵' }, haegeum: { ko: '해금', e: '🎻' }, taepyeongso: { ko: '태평소', e: '📯' }, violin: { ko: '바이올린', e: '🎻' }, cello: { ko: '첼로', e: '🎻' },
+  harmonica: { ko: '하모니카', e: '🎵' }, guitar: { ko: '기타', e: '🎸' },
+  ubass: { ko: '콘트라베이스', e: '🪵' }, ebass: { ko: '전기 베이스', e: '🎸' }, sbass: { ko: '신스 베이스', e: '🎛️' }, b808: { ko: '808 베이스', e: '🔊' }, haegeum: { ko: '해금', e: '🎻' }, taepyeongso: { ko: '태평소', e: '📯' }, violin: { ko: '바이올린', e: '🎻' }, cello: { ko: '첼로', e: '🎻' },
 };
 // 그림 색으로 악기 추천 (공식): 따뜻하고 밝으면 반짝이는 소리, 차가우면 부드러운 소리, 어두우면 무게 있는 소리
 function recommend(an) {
@@ -373,6 +517,31 @@ function play(ctx, out, inst, t, m, dur, vel) {
       o.frequency.setValueAtTime(f * 1.04, t); o.frequency.linearRampToValueAtTime(f, t + .06);
       const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 6.5; lg.gain.value = f * .015; lfo.connect(lg); lg.connect(o.frequency); lfo.start(t + .18); lfo.stop(t + len + .12); break;
     }
+    case 'guitar': {                         // 통기타: 줄 튕김
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(2600, t); lp.frequency.exponentialRampToValueAtTime(500, t + .9); lp.connect(g);
+      const gg = ctx.createGain(); gg.connect(lp); env(ctx, gg, t, .32 * vel, .003, Math.min(1.6, dur + .7));
+      osc(ctx, 'sawtooth', f, t, t + 1.8, gg); osc(ctx, 'triangle', f * 2.001, t, t + 1.2, (() => { const h = ctx.createGain(); h.gain.value = .3; h.connect(gg); return h; })()); break;
+    }
+    case 'ubass': {                          // 콘트라베이스: 둥- 하는 나무 소리
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.connect(g);
+      const gg = ctx.createGain(); gg.connect(lp); env(ctx, gg, t, .55 * vel, .01, Math.min(1.4, dur + .3));
+      osc(ctx, 'triangle', f, t, t + 1.6, gg); osc(ctx, 'sine', f, t, t + 1.6, gg); break;
+    }
+    case 'ebass': {                          // 전기 베이스: 단단하게
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 1.5; lp.connect(g);
+      const gg = ctx.createGain(); gg.connect(lp); const len = Math.max(.15, dur);
+      gg.gain.setValueAtTime(0.0001, t); gg.gain.exponentialRampToValueAtTime(.42 * vel, t + .01); gg.gain.exponentialRampToValueAtTime(.2 * vel, t + len); gg.gain.exponentialRampToValueAtTime(0.0001, t + len + .1);
+      osc(ctx, 'square', f, t, t + len + .15, gg); osc(ctx, 'sine', f, t, t + len + .15, gg); break;
+    }
+    case 'sbass': {                          // 신스 베이스: 통통
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(1600, t); lp.frequency.exponentialRampToValueAtTime(300, t + .25); lp.connect(g);
+      const gg = ctx.createGain(); gg.connect(lp); env(ctx, gg, t, .45 * vel, .005, Math.max(.2, dur));
+      osc(ctx, 'sawtooth', f, t, t + dur + .3, gg); break;
+    }
+    case 'b808': {                           // 808: 낮게 길게 우는 베이스
+      const gg = ctx.createGain(); gg.connect(g); env(ctx, gg, t, .7 * vel, .005, Math.max(.6, dur * 1.1));
+      const o = osc(ctx, 'sine', f / 2, t, t + dur + .8, gg); o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f / 2, t + .06); break;
+    }
     case 'sax': {                            // 꺾고 떠는 색소폰 (트로트)
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200; lp.Q.value = 2; lp.connect(g);
       const gg = ctx.createGain(); gg.connect(lp); const len = Math.max(.2, dur);
@@ -413,32 +582,17 @@ function play(ctx, out, inst, t, m, dur, vel) {
 // 반주 (부드러운 패드 + 베이스) — 악기와 상관없이 같은 소리
 // ----- 곡 스타일: 멜로디는 그대로(그림 색), 빠르기 범위·반주·드럼만 바뀌어요 -----
 const STYLES = {
-  classic: { ko: '클래식', e: '🎻', bpm: [76, 112], acc: 'alberti', legato: 1 },
-  kids:    { ko: '동요', e: '🧸', bpm: [100, 126], acc: 'oompah', drum: 'shaker', legato: .8 },
-  ballad:  { ko: '발라드', e: '🎹', bpm: [64, 80], acc: 'ballad', drum: 'soft', legato: 1.2 },
-  kpop:    { ko: 'K-pop 댄스', e: '🎤', bpm: [116, 128], acc: 'synth', drum: 'four', legato: .6 },
-  jazz:    { ko: '재즈', e: '🎷', bpm: [104, 132], acc: 'walk', drum: 'ride', swing: .17, seventh: 1, legato: .85 },
-  lofi:    { ko: '로파이', e: '☕', bpm: [74, 86], acc: 'rhodes', drum: 'lofi', swing: .1, seventh: 1, legato: 1, crackle: 1 },
-  gugak:   { ko: '국악·민요', e: '🪘', bpm: [84, 108], acc: 'drone', drum: 'janggu', penta: 1, legato: 1 },
-  trot:    { ko: '트로트', e: '🎙️', bpm: [118, 134], acc: 'twobeat', drum: 'twobeat', trot: 1, legato: .9 },
-  hiphop:  { ko: '힙합', e: '🧢', bpm: [84, 96], acc: 'boom808', drum: 'boombap', swing: .08, seventh: 1, legato: .7 },
-  orch:    { ko: '오케스트라', e: '🎼', bpm: [72, 100], acc: 'orch', drum: 'timpani', legato: 1.1, double: 1 },
-  drumkit: { ko: '드럼', e: '🥁', bpm: [100, 128], acc: 'pulse', drum: 'none', drumMelody: 1, legato: 1 },
+  classic: { ko: '클래식', e: '🎻', bpm: [76, 112], acc: 'alberti', bassPat: 'half', drum: 'soft', legato: 1 },
+  kids:    { ko: '동요', e: '🧸', bpm: [100, 126], acc: 'oompah', bassPat: 'two', drum: 'shaker', legato: .8 },
+  ballad:  { ko: '발라드', e: '🎹', bpm: [64, 80], acc: 'ballad', bassPat: 'whole', drum: 'soft', legato: 1.2 },
+  kpop:    { ko: 'K-pop 댄스', e: '🎤', bpm: [116, 128], acc: 'synth', bassPat: 'oct8', drum: 'four', legato: .6 },
+  jazz:    { ko: '재즈', e: '🎷', bpm: [104, 132], acc: 'walk', bassPat: 'walk', drum: 'ride', swing: .17, seventh: 1, legato: .85 },
+  lofi:    { ko: '로파이', e: '☕', bpm: [74, 86], acc: 'rhodes', bassPat: 'sync', drum: 'lofi', swing: .1, seventh: 1, legato: 1, crackle: 1 },
+  gugak:   { ko: '국악·민요', e: '🪘', bpm: [84, 108], acc: 'drone', bassPat: 'whole', drum: 'janggu', legato: 1 },
+  trot:    { ko: '트로트', e: '🎙️', bpm: [118, 134], acc: 'twobeat', bassPat: 'two', drum: 'twobeat', legato: .9 },
+  hiphop:  { ko: '힙합', e: '🧢', bpm: [84, 96], acc: 'boom808', bassPat: 'sync', drum: 'boombap', swing: .08, seventh: 1, legato: .7 },
+  orch:    { ko: '오케스트라', e: '🎼', bpm: [72, 100], acc: 'orch', bassPat: 'whole', drum: 'timpani', legato: 1.1 },
 };
-// 드럼 버전: 음 이름 → 드럼 (도 킥 · 레 낮은 탐 · 미 가운데 탐 · 파 스네어 · 솔 높은 탐 · 라 하이햇 · 시 심벌), ♯ 세게 · ♭ 살살
-const DRUM_OF = { 0: 'kick', 1: 'kick', 2: 'tomL', 3: 'tomL', 4: 'tomM', 5: 'snare', 6: 'snare', 7: 'tomH', 8: 'tomH', 9: 'hat', 10: 'ohat', 11: 'crash' };
-// 트로트풍: 트로트 음계(라 시 도 미 파)의 가까운 음으로 — 레→도, 솔→파, 반음은 아래 음으로
-function toTrot(n) {
-  const pc = ((n.midi % 12) + 12) % 12, map = { 0: 0, 1: 0, 2: 0, 3: 4, 4: 4, 5: 5, 6: 5, 7: 5, 8: 9, 9: 9, 10: 9, 11: 11 };
-  const nm = { 0: '도', 4: '미', 5: '파', 9: '라', 11: '시' };
-  return { ...n, midi: n.midi - pc + map[pc], name: nm[map[pc]] + (map[pc] !== pc ? '(' + n.name + ')' : ''), warm: -1 };
-}
-// 국악풍: 가장 가까운 5음(도 레 미 솔 라)으로 — 파→미, 시→라, 반음은 아래 음으로
-function toPenta(n) {
-  const pc = ((n.midi % 12) + 12) % 12, map = { 0: 0, 1: 0, 2: 2, 3: 2, 4: 4, 5: 4, 6: 7, 7: 7, 8: 7, 9: 9, 10: 9, 11: 9 };
-  const nm = { 0: '도', 2: '레', 4: '미', 7: '솔', 9: '라' };
-  return { ...n, midi: n.midi - pc + map[pc], name: nm[map[pc]] + (map[pc] !== pc ? '(' + n.name + ')' : '') };
-}
 const NOISE = new WeakMap();
 function noise(ctx) {
   if (NOISE.has(ctx)) return NOISE.get(ctx);
@@ -560,28 +714,27 @@ function pad(ctx, out, t, notes, len, soft, spb) {
     osc(ctx, 'triangle', hz(m), tt, tt + step * 2.4, g);
   });
 }
+// 역할별로 연주 예약. mix = { melody:{on,vol}, chords:{on,inst,vol}, bass:{…}, harm:{…}, rhythm:{on,vol} }
 function schedule(ctx, out, song, inst, t0, opt = {}) {
-  const spb = 60 / song.bpm, ST = STYLES[song.style] || STYLES.classic, to = opt.to || Infinity;
-  const sw = b => ST.swing && Math.abs((b % 1) - .5) < .01 ? b + ST.swing : b;      // 재즈·로파이: 엇박을 살짝 늦게 (스윙)
-  const lv = opt.gain != null ? (() => { const g = ctx.createGain(); g.gain.value = opt.gain; g.connect(out); return g; })() : null;
-  if (lv) out = lv;
-  song.ev.forEach(e => {
-    if (e.t >= to) return;
-    const tt = t0 + sw(e.t) * spb;
-    if (ST.drumMelody) {                      // 드럼 버전: 음 대신 드럼을 쳐요 (♯ 세게, ♭ 살살)
-      const acc = /♯/.test(e.name) ? 1.25 : /♭/.test(e.name) ? .55 : .9;
-      hit(ctx, out, tt, DRUM_OF[((e.midi % 12) + 12) % 12], Math.min(1.2, e.vel * acc));
-      if (e.dur >= 1) hit(ctx, out, tt + spb * .5, 'hat', .4);     // 긴 음은 하이햇으로 이어 주기
-      return;
-    }
-    play(ctx, out, inst, tt, e.midi, Math.min(e.dur, to - e.t) * spb * ST.legato, e.vel);
-    if (ST.double) play(ctx, out, inst === 'flute' ? 'violin' : 'flute', tt, e.midi + 12, e.dur * spb * ST.legato, e.vel * .45);   // 오케스트라: 한 옥타브 위에서 함께
-  });
-  if (opt.melodyOnly) return;                 // 위에 쌓는 겹은 멜로디만 (화음·드럼은 첫 겹이 맡아요)
-  const beats = Math.min(song.beats, to);
-  song.chords.forEach((c, i) => { if (c.t >= beats) return; c.nextRoot = song.chords[i + 1] ? song.chords[i + 1].root : null; accomp(ctx, out, c, t0 + c.t * spb, 4 * spb, c.soft, spb, ST, sw); });
-  drums(ctx, out, ST.drum, t0, beats, spb, sw);
-  if (ST.crackle) for (let x = 0; x < beats * 4; x++) hit(ctx, out, t0 + ((x * 0.6180339) % 1) * beats * spb, 'crackle', .3 + ((x * 0.381966) % 1) * .7);   // 레코드판 지직
+  const spb = 60 / song.bpm, ST = STYLES[song.style] || STYLES.classic, to = opt.to || Infinity, mix = opt.mix || defaultMix(song.style);
+  const roles = opt.roles || ROLE_ORDER.filter(k => mix[k] && mix[k].on);
+  const sw = b => ST.swing && Math.abs((b % 1) - .5) < .01 ? b + ST.swing : b;      // 재즈·로파이·힙합: 엇박을 살짝 늦게 (스윙)
+  const bus = k => { const g = ctx.createGain(); g.gain.value = (mix[k] && mix[k].vol != null ? mix[k].vol : 1) * (opt.gain ?? 1); g.connect(out); return g; };
+  const at = b => t0 + sw(b) * spb;
+  if (roles.includes('melody')) { const o = bus('melody'); song.ev.forEach(e => { if (e.t < to) play(ctx, o, inst, at(e.t), e.midi, Math.min(e.dur, to - e.t) * spb * ST.legato, e.vel); }); }
+  if (roles.includes('chords')) { const o = bus('chords'), ins = mix.chords.inst; chordEvents(song, ST).forEach(([b, m, d, v]) => { if (b < to) play(ctx, o, ins, at(b), m, Math.min(d, to - b) * spb, v); }); }
+  if (roles.includes('bass'))   { const o = bus('bass'), ins = mix.bass.inst; bassEvents(song, ST).forEach(([b, m, d, v]) => { if (b < to) play(ctx, o, ins, at(b), m, Math.min(d, to - b) * spb, v); }); }
+  if (roles.includes('harm'))   { const o = bus('harm'), ins = mix.harm.inst; harmEvents(song).forEach(([b, m, d, v]) => { if (b < to) play(ctx, o, ins, at(b), m, Math.min(d, to - b) * spb * ST.legato, v); }); }
+  if (roles.includes('rhythm')) {
+    const o = bus('rhythm'), beats = Math.min(song.beats, to);
+    drums(ctx, o, ST.drum, t0, beats, spb, sw);
+    if (ST.crackle) for (let x = 0; x < beats * 4; x++) hit(ctx, o, t0 + ((x * 0.6180339) % 1) * beats * spb, 'crackle', .3 + ((x * 0.381966) % 1) * .7);   // 레코드판 지직
+    song.chords.forEach(c => { if (c.t > 0 && c.t < beats && c.t % 16 === 0 && ST.drum !== 'janggu' && ST.drum !== 'timpani') hit(ctx, o, at(c.t), 'crash', .5); });   // 4마디마다 챙-
+  }
+}
+function defaultMix(style) {
+  const d = STYLE_DEF[style] || STYLE_DEF.classic;
+  return { melody: { on: true, vol: 1 }, chords: { on: true, inst: d.chords, vol: .9 }, bass: { on: true, inst: d.bass, vol: .9 }, harm: { on: false, inst: d.harm, vol: .7 }, rhythm: { on: true, vol: .8 } };
 }
 function master(ctx) {   // 살짝 울림 (방 소리)
   const out = ctx.createGain(); out.gain.value = .9;
@@ -625,11 +778,11 @@ function openArt(id) {
     <div class="bar"><div id="prog"></div></div>
     <div class="ctrl"><button class="btn sub" id="pngBtn" onclick="savePng()" disabled>🖼 선 악보 저장</button><button class="btn sub" id="wavBtn" onclick="saveWav()" disabled>🎧 소리 저장</button></div>
     <div class="layers">
-      <div class="sec" style="margin-top:0">🎚 겹겹이 쌓기 <span style="color:var(--sub);font-weight:400">· 루프 페달처럼</span></div>
-      <div class="rule" style="margin-top:4px">길·스타일·악기를 바꿔 가며 한 겹씩 쌓으면, 한 겹씩 차례로 더해지다가 마지막에 모두 함께 연주돼요. 빠르기와 화음·드럼은 <b>첫 겹</b>을 따라가고, 위에 쌓는 겹은 멜로디만 더해요. (최대 5겹)</div>
-      <div id="layerList"></div>
-      <div class="ctrl"><button class="btn sub" id="addLayer" onclick="addLayer()">＋ 지금 소리를 한 겹 쌓기</button></div>
-      <div class="ctrl"><button class="btn play" id="layerPlay" onclick="toggleLayers()" disabled>▶ 쌓은 곡 듣기</button><button class="btn sub" id="layerWav" onclick="saveLayersWav()" disabled>🎧 저장</button></div>
+      <div class="sec" style="margin-top:0">🎚 역할별로 쌓기 <span style="color:var(--sub);font-weight:400">· 모두 같은 화음을 따라가요</span></div>
+      <div class="rule" id="keyInfo" style="margin-top:4px"></div>
+      <div id="roleList"></div>
+      <div class="ctrl"><button class="btn sub" id="buildBtn" onclick="toggleBuild()" disabled>▶ 차례로 쌓아 듣기</button></div>
+      <div class="rule" style="margin-top:6px">켠 역할이 모두 ▶ 그림이 노래해요 · 🎧 소리 저장에 함께 들어가요. '차례로 쌓아 듣기'는 2마디씩 한 역할씩 더한 뒤 곡 전체를 들려줘요.</div>
     </div>`;
   const img = $('art');
   img.onload = () => {
@@ -640,8 +793,8 @@ function openArt(id) {
     cur.stroke = st;
     const qp = Q.get('path');
     const mode = qp && PATHS[qp] ? qp : (store(pathKey(id)) || 'zigzag');
-    const qs = Q.get('style'); cur.style = qs && STYLES[qs] ? qs : (store(styleKey(id)) || 'classic');
-    renderInsts(false); renderStyles(); sizeFx(); setupDraw(); loadLayers();
+    const qs = Q.get('style'), sv = store(styleKey(id)); cur.style = qs && STYLES[qs] ? qs : (STYLES[sv] ? sv : 'classic');
+    renderInsts(false); renderStyles(); sizeFx(); setupDraw(); loadMix();
     setPath(mode === 'draw' && !st ? 'zigzag' : mode);
     if (Q.get('autoplay')) toggle();
   };
@@ -658,88 +811,60 @@ function setStyle(k) {
   if (k === 'gugak' && !['gayageum', 'daegeum', 'haegeum', 'taepyeongso'].includes(inst)) inst = 'gayageum';     // 국악은 가야금으로 바로
   if (k === 'trot' && inst !== 'sax') inst = 'sax';                                      // 트로트는 색소폰으로 바로
   if (k === 'orch' && !['violin', 'flute', 'strings', 'cello'].includes(inst)) inst = 'violin';   // 오케스트라는 바이올린으로
+  if (!['gugak', 'trot', 'orch'].includes(k) && ['gayageum', 'daegeum', 'haegeum', 'taepyeongso', 'sax'].includes(inst)) inst = recList()[0];   // 국악·트로트 악기에서 다른 스타일로 오면 그림 추천 악기로
+  if (cur.mix) { const d = STYLE_DEF[k] || STYLE_DEF.classic; cur.mix.chords.inst = d.chords; cur.mix.bass.inst = d.bass; cur.mix.harm.inst = d.harm; saveMix(); }
   renderInsts(false);
   if (cur.song) build();
   try { parent.postMessage({ jjmusic: 'style', art: cur.a.id, style: k }, '*'); } catch (e) {}
   if (was) toggle();
 }
-// ----- 🎚 겹겹이 쌓기 (루프 페달처럼) -----
-const layerKey = id => 'jjcm_layers_' + id;
-function loadLayers() { try { cur.layers = JSON.parse(store(layerKey(cur.a.id)) || '[]'); } catch (e) { cur.layers = []; } renderLayers(); }
-function saveLayers() { store(layerKey(cur.a.id), JSON.stringify(cur.layers)); renderLayers(); }
-function layerLabel(L) { return `${PATHS[L.path].e} ${PATHS[L.path].ko} · ${STYLES[L.style].e} ${STYLES[L.style].ko}${L.style === 'drumkit' ? '' : ' · ' + INST[L.inst].e + ' ' + INST[L.inst].ko}`; }
-function renderLayers(activeN = -1) {
-  const n = cur.layers.length;
-  $('layerList').innerHTML = cur.layers.map((L, i) => `<div class="lay ${L.mute ? 'mute' : ''} ${i < activeN ? 'on' : ''}"><b>${i + 1}겹</b><span>${layerLabel(L)}${i === 0 ? ' <small style="color:var(--sub)">(바닥)</small>' : ''}</span>
-    <input type="range" min="0" max="100" value="${Math.round((L.vol ?? 1) * 100)}" oninput="cur.layers[${i}].vol=this.value/100; saveLayersQuiet()" title="소리 크기">
-    <button onclick="cur.layers[${i}].mute=!cur.layers[${i}].mute; saveLayers()" title="끄기/켜기">${L.mute ? '🔇' : '🔊'}</button><button onclick="cur.layers.splice(${i},1); saveLayers()" title="빼기">✕</button></div>`).join('');
-  $('addLayer').disabled = n >= 5 || !cur.song;
-  $('addLayer').innerText = n ? `＋ 지금 소리를 ${n + 1}겹째로 쌓기` : '＋ 지금 소리를 첫 겹(바닥)으로 쌓기';
-  $('layerPlay').disabled = $('layerWav').disabled = !n;
+// ----- 🎚 역할별로 쌓기 화면 -----
+const mixKey = id => 'jjcm_mix_' + id;
+function loadMix() { try { cur.mix = JSON.parse(store(mixKey(cur.a.id)) || 'null'); } catch (e) { cur.mix = null; } if (!cur.mix || !cur.mix.melody) cur.mix = defaultMix(cur.style); renderRoles(); }
+function saveMix() { store(mixKey(cur.a.id), JSON.stringify(cur.mix)); }
+function renderRoles(active = -1) {
+  $('roleList').innerHTML = ROLE_ORDER.map((k, i) => {
+    const R = ROLES[k], M = cur.mix[k];
+    const pick = R.opts ? `<select onchange="cur.mix.${k}.inst=this.value; saveMix(); replay()">${R.opts.map(o => `<option value="${o}" ${o === M.inst ? 'selected' : ''}>${INST[o].e} ${INST[o].ko}</option>`).join('')}</select>`
+      : k === 'melody' ? `<span class="rl-fix">${INST[inst].e} ${INST[inst].ko}</span>` : `<span class="rl-fix">${STYLES[cur.style].e} ${STYLES[cur.style].ko} 장단</span>`;
+    return `<div class="role ${M.on ? '' : 'off'} ${i === active ? 'now' : ''}">
+      <label><input type="checkbox" ${M.on ? 'checked' : ''} ${k === 'melody' ? 'disabled' : ''} onchange="cur.mix.${k}.on=this.checked; saveMix(); renderRoles(); replay()"><b>${R.e} ${R.ko}</b></label>
+      <div class="rl-d">${R.d}</div><div class="rl-c">${pick}<input type="range" min="0" max="120" value="${Math.round(M.vol * 100)}" oninput="cur.mix.${k}.vol=this.value/100; saveMix()" title="소리 크기"></div></div>`;
+  }).join('');
+  if (cur.song) $('keyInfo').innerHTML = `🎼 <b>${cur.song.key.name}</b> (그림에서 가장 넓은 색 ${cur.song.key.color != null ? COLORS[cur.song.key.color].ko : '없음'}${cur.song.key.mode === 'major' ? ' · 따뜻한 색이 많아 장조' : ' · 차가운 색이 많아 단조'}) · 화음 ${cur.song.chords.map(c => ROMAN[c.deg]).join(' ')}`;
 }
-function saveLayersQuiet() { store(layerKey(cur.a.id), JSON.stringify(cur.layers)); }
-function addLayer() {
-  if (!cur.song || cur.layers.length >= 5) return;
-  cur.layers.push({ path: cur.mode, style: cur.style, inst, stroke: cur.mode === 'draw' ? cur.stroke : null, vol: 1 });
-  saveLayers();
-}
-// 쌓은 곡 만들기: 첫 겹 빠르기로 모든 겹을 다시 만들고, 마디 길이(루프)를 맞춰요
-function layerPlan() {
-  const Ls = cur.layers.filter(L => !L.mute); if (!Ls.length) return null;
-  const base = compose(cur.an, orderPath(cur.an, Ls[0].path, Ls[0].stroke), Ls[0].style);
-  const bpm = base.bpm, spb = 60 / bpm, n = Ls.length;
-  let loopB = Math.min(16, Math.floor(base.beats / 4) * 4);
-  while (loopB > 8 && (n + 1) * loopB * spb > 60) loopB -= 4;              // 전체 1분 안으로
-  const songs = Ls.map(L => compose(cur.an, orderPath(cur.an, L.path, L.stroke), L.style, bpm));
-  return { Ls, songs, bpm, spb, loopB, rounds: n === 1 ? 2 : n + 1 };     // 한 겹씩 더해지고, 마지막에 한 번 더 모두 함께
-}
-function scheduleLayers(ctx, out, plan, t0) {
-  for (let r = 0; r < plan.rounds; r++) {
-    const tr = t0 + r * plan.loopB * plan.spb, upto = Math.min(r + 1, plan.Ls.length);
-    for (let i = 0; i < upto; i++) schedule(ctx, out, plan.songs[i], plan.Ls[i].inst, tr, { to: plan.loopB, melodyOnly: i > 0, gain: (plan.Ls[i].vol ?? 1) * (i ? .8 : 1) });
-  }
-}
-let layerPlaying = false;
-function toggleLayers() {
+function replay() { if (playing && !playing.build) { stop(); toggle(); } }
+// ▶ 차례로 쌓아 듣기: 2마디씩 멜로디 → +화음 → +베이스 → +어울림 → +리듬, 마지막에 곡 전체
+function toggleBuild() {
   if (playing) { stop(); return; }
-  const plan = layerPlan(); if (!plan) return;
+  const song = cur.song, spb = 60 / song.bpm, L = 8;
+  const on = ROLE_ORDER.filter(k => cur.mix[k].on);
   actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume();
-  const out = master(actx), t0 = actx.currentTime + .15, total = plan.rounds * plan.loopB;
-  scheduleLayers(actx, out, plan, t0);
-  playing = { out, t0, end: t0 + total * plan.spb + 1.2, layers: true }; layerPlaying = true;
-  $('stage').classList.add('playing'); $('layerPlay').innerText = '■ 멈추기';
+  const out = master(actx), t0 = actx.currentTime + .15;
+  on.forEach((k, i) => schedule(actx, out, song, inst, t0 + i * L * spb, { to: L, mix: cur.mix, roles: on.slice(0, i + 1) }));
+  const tFull = t0 + on.length * L * spb;
+  schedule(actx, out, song, inst, tFull, { mix: cur.mix });
+  playing = { out, t0, end: tFull + song.beats * spb + 1.2, build: true };
+  $('stage').classList.add('playing'); $('buildBtn').innerText = '■ 멈추기';
+  const P = song.path;
   const loop = () => {
-    if (!playing || !playing.layers) return;
-    const beat = (actx.currentTime - t0) / plan.spb, r = Math.min(plan.rounds - 1, Math.max(0, Math.floor(beat / plan.loopB))), lb = beat - r * plan.loopB;
-    const act = Math.min(r + 1, plan.Ls.length);
-    fg.clearRect(0, 0, fx.width, fx.height);
-    for (let i = 0; i < act; i++) {                // 겹마다 그 길의 선을 함께 그려요
-      const P = plan.songs[i].path.filter(q => q.t < plan.loopB);
-      let k = 0; while (k + 1 < P.length && P[k + 1].t <= lb) k++;
-      if (beat >= 0) drawPath(k, 1, fg, null, null, P);
-      const W = fx.width / (devicePixelRatio || 1), H = fx.height / (devicePixelRatio || 1), c = P[k] && P[k].cell;
-      if (c && beat >= 0) { fg.fillStyle = P[k].rest ? 'rgba(255,255,255,.6)' : c.col; fg.shadowColor = '#fff'; fg.shadowBlur = 14; fg.beginPath(); fg.arc(c.x * W, c.y * H, 6 + 2 * Math.sin(actx.currentTime * 14 + i), 0, 6.29); fg.fill(); fg.shadowBlur = 0; }
-    }
-    const now = $('now'); now.querySelector('i').style.background = 'transparent';
-    now.querySelector('span').innerText = r >= plan.Ls.length ? `🎚 ${plan.Ls.length}겹 모두 함께` : `🎚 ${act}겹째 쌓는 중 · ${layerLabel(plan.Ls[act - 1])}`;
-    renderLayersActive(act);
-    $('prog').style.width = Math.min(100, 100 * beat / (plan.rounds * plan.loopB)) + '%';
-    if (actx.currentTime > playing.end) { stop(); return; }
+    if (!playing || !playing.build) return;
+    const now = actx.currentTime, inBuild = now < tFull;
+    const step = Math.min(on.length - 1, Math.max(0, Math.floor((now - t0) / (L * spb))));
+    const beat = inBuild ? ((now - t0) / spb) % L : (now - tFull) / spb;
+    let i = 0; while (i + 1 < P.length && P[i + 1].t <= beat) i++;
+    drawPath(beat < 0 ? -1 : i, 1);
+    $('now').querySelector('i').style.background = 'transparent';
+    $('now').querySelector('span').innerText = inBuild ? `🎚 ${on.slice(0, step + 1).map(k => ROLES[k].e).join(' + ')}  ${ROLES[on[step]].ko} 더하는 중` : '🎚 모두 함께 · 곡 전체';
+    renderRolesActive(inBuild ? step : -1);
+    $('prog').style.width = Math.min(100, 100 * (now - t0) / (playing.end - t0)) + '%';
+    if (now > playing.end) { stop(); return; }
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);
 }
-let lastAct = -1;
-function renderLayersActive(n) { if (n === lastAct) return; lastAct = n; const live = cur.layers.filter(L => !L.mute); document.querySelectorAll('.lay').forEach((el, i) => el.classList.toggle('on', !cur.layers[i].mute && live.indexOf(cur.layers[i]) < n)); }
-async function saveLayersWav() {
-  const plan = layerPlan(); if (!plan) return;
-  const b = $('layerWav'); b.disabled = true; b.innerText = '만드는 중…';
-  const len = plan.rounds * plan.loopB * plan.spb + 2.5, sr = 44100, oc = new OfflineAudioContext(2, Math.ceil(len * sr), sr);
-  scheduleLayers(oc, master(oc), plan, .05);
-  const buf = await oc.startRendering();
-  download(URL.createObjectURL(new Blob([wav(buf)], { type: 'audio/wav' })), `JJ_color_music_${cur.a.id}_layers${plan.Ls.length}.wav`);
-  b.disabled = false; b.innerText = '🎧 저장';
-}
+let lastRole = -2;
+function renderRolesActive(n) { if (n === lastRole) return; lastRole = n; const on = ROLE_ORDER.filter(k => cur.mix[k].on); document.querySelectorAll('.role').forEach((el, i) => el.classList.toggle('now', ROLE_ORDER[i] === on[n])); }
 function renderPaths() {
   $('paths').innerHTML = Object.entries(PATHS).map(([k, p]) => `<button class="inst ${k === cur.mode ? 'on' : ''}" onclick="setPath('${k}')">${p.e} ${p.ko}</button>`).join('');
 }
@@ -762,9 +887,9 @@ function build() {
   cur.song = compose(cur.an, cells, cur.style);
   const notes = cur.song.ev.filter(e => !e.bass).length;
   $('meta').innerText = `${PATHS[cur.mode].e} ${PATHS[cur.mode].ko} 길 · ${STYLES[cur.style].e} ${STYLES[cur.style].ko} · ${Math.round(cur.song.sec)}초 · 빠르기 ${cur.song.bpm} · 음 ${notes}개`;
-  preview(); enableBtns(true);
+  preview(); enableBtns(true); if (cur.mix) renderRoles();
 }
-function enableBtns(on) { ['playBtn', 'pngBtn', 'wavBtn'].forEach(id => $(id).disabled = !on); if ($('addLayer')) $('addLayer').disabled = !on || (cur.layers || []).length >= 5; }
+function enableBtns(on) { ['playBtn', 'pngBtn', 'wavBtn', 'buildBtn'].forEach(id => $(id) && ($(id).disabled = !on)); }
 // 연주 전: 길을 흐린 점선으로 미리 보여 주기
 function preview() {
   const W = fx.width / (devicePixelRatio || 1), H = fx.height / (devicePixelRatio || 1), P = cur.song.path;
@@ -805,19 +930,17 @@ function setupDraw() {
 function recList() {   // 추천 악기: 국악·트로트·클래식은 그 스타일 악기, 나머지는 그림 색으로
   if (cur.style === 'orch') return ['violin', 'flute', 'strings'];
   if (cur.style === 'hiphop') return ['piano', 'bell', 'strings'];
-  if (cur.style === 'drumkit') return [];
   if (['kids', 'ballad'].includes(cur.style)) return [...new Set(['harmonica', ...cur.rec])].slice(0, 4);
   return cur.style === 'gugak' ? ['gayageum', 'daegeum', 'haegeum', 'taepyeongso'] : cur.style === 'trot' ? ['sax', 'harmonica', 'strings', 'piano'] : cur.style === 'classic' ? ['piano', 'violin', 'cello'] : cur.rec;
 }
 function renderInsts(all) {
-  if (cur.style === 'drumkit') { $('insts').innerHTML = '<span style="font-size:13px;color:var(--sub)">🥁 드럼 버전은 그림 색이 드럼 세트를 쳐요 (도 킥 · 레 낮은 탐 · 미 가운데 탐 · 파 스네어 · 솔 높은 탐 · 라 하이햇 · 시 심벌)</span>'; return; }
   const rec = recList();
   const keys = all ? Object.keys(INST) : [...new Set([...rec, inst])];
   $('insts').innerHTML = keys.map(k => `<button class="inst ${k === inst ? 'on' : ''} ${rec.includes(k) ? 'rec' : ''}" onclick="pickInst('${k}')">${INST[k].e} ${INST[k].ko}</button>`).join('')
     + (all ? '' : '<button class="more" onclick="renderInsts(true)">다른 악기 ›</button>');
 }
 function pickInst(k) {
-  inst = k; store(instKey(cur.a.id), k);
+  inst = k; store(instKey(cur.a.id), k); if (cur.mix) setTimeout(renderRoles, 0);
   renderInsts(!recList().includes(k) || document.querySelectorAll('#insts .inst').length > 5);
   try { parent.postMessage({ jjmusic: 'inst', art: cur.a.id, inst: k }, '*'); } catch (e) {}   // 앱에 알려 주기
   if (playing) { stop(); toggle(); }
@@ -852,7 +975,7 @@ function toggle() {
   actx = actx || new (window.AudioContext || window.webkitAudioContext)();
   actx.resume();
   const out = master(actx), t0 = actx.currentTime + 0.15, song = cur.song, spb = 60 / song.bpm;
-  schedule(actx, out, song, inst, t0);
+  schedule(actx, out, song, inst, t0, { mix: cur.mix });
   playing = { out, t0, end: t0 + song.beats * spb + 1.2 }; finished = false;
   $('stage').classList.add('playing'); $('playBtn').innerText = '■ 멈추기';
   const P = song.path;
@@ -882,8 +1005,8 @@ function stop() {
   playing = null;
   const st = $('stage'); if (st) st.classList.remove('playing');
   if ($('playBtn')) $('playBtn').innerText = '▶ 그림이 노래해요';
-  if ($('layerPlay')) $('layerPlay').innerText = '▶ 쌓은 곡 듣기';
-  layerPlaying = false; lastAct = -1; if (cur && cur.layers && $('layerList')) renderLayers();
+  if ($('buildBtn')) $('buildBtn').innerText = '▶ 차례로 쌓아 듣기';
+  lastRole = -2; if (cur && cur.mix && $('roleList')) renderRolesActive(-1);
 }
 function finish() { stop(); drawPath(cur.song.path.length - 1); finished = true; $('prog').style.width = '100%'; try { parent.postMessage({ jjmusic: 'done', art: cur.a.id, inst }, '*'); } catch (e) {} }
 
@@ -902,7 +1025,7 @@ async function saveWav() {
   const b = $('wavBtn'); b.disabled = true; b.innerText = '만드는 중…';
   const song = cur.song, len = song.beats * 60 / song.bpm + 2.5, sr = 44100;
   const oc = new OfflineAudioContext(2, Math.ceil(len * sr), sr);
-  schedule(oc, master(oc), song, inst, 0.05);
+  schedule(oc, master(oc), song, inst, 0.05, { mix: cur.mix });
   const buf = await oc.startRendering();
   download(URL.createObjectURL(new Blob([wav(buf)], { type: 'audio/wav' })), `JJ_color_music_${cur.a.id}_${cur.mode}_${cur.style}_${inst}.wav`);
   b.disabled = false; b.innerText = '🎧 소리 저장';
