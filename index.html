@@ -169,7 +169,7 @@
     <table id="ruleTable"></table>
   </details>
 
-  <footer>그림 © J.J (장예성) · 색-음 공식과 연주 엔진 © AGJJ 아그짜<br>그림과 음악을 허락 없이 상업적으로 쓸 수 없어요.</footer>
+  <footer>그림 © JJ · 색-음 공식과 연주 엔진 © AGJJ 아그짜<br>그림과 음악을 허락 없이 상업적으로 쓸 수 없어요.</footer>
 </div>
 
 <script>
@@ -807,7 +807,7 @@ function store(k, v) { try { if (v === undefined) return localStorage.getItem(k)
 
 
 // ===================================================================
-//  🖍 색칠 놀이: 예성이 그림에서 선만 뽑은 도안에 색을 칠하면, 그 색으로 아트쏭이 노래해요
+//  🖍 색칠 놀이: JJ의 그림에서 선만 뽑은 도안에 색을 칠하면, 그 색으로 아트쏭이 노래해요
 //  - 팔레트 = 색-음 공식표 그대로 (무지개 7색 × 탁한·보통·쨍한 = ♭ ♮ ♯)
 //  - 칠하지 않은 흰 곳은 쉼표 → 많이 칠할수록 노래가 풍성해져요
 // ===================================================================
@@ -1363,7 +1363,7 @@ async function makeVideo() {
     g.fillStyle = '#cbd5e1'; g.font = "500 34px 'Noto Sans KR', sans-serif"; g.textAlign = 'center'; g.fillText(sub, VW / 2, 1712);
     g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(140, 1760, VW - 280, 8);
     g.fillStyle = '#e6c294'; g.fillRect(140, 1760, (VW - 280) * Math.max(0, Math.min(1, beat / song.beats)), 8);
-    g.fillStyle = 'rgba(255,255,255,.7)'; g.font = "500 28px 'Noto Sans KR', sans-serif"; g.fillText('그림 © J.J (장예성) · AGJJ 아그짜', VW / 2, 1840);
+    g.fillStyle = 'rgba(255,255,255,.7)'; g.font = "500 28px 'Noto Sans KR', sans-serif"; g.fillText('그림 © JJ · AGJJ 아그짜', VW / 2, 1840);
     const left = Math.max(0, Math.ceil(t0 + total - now)); const sEl = document.getElementById('vidSec'); if (sEl) sEl.innerText = left + '초';
     if (now < t0 + total) requestAnimationFrame(frame); else rec.stop();
   };
