@@ -829,6 +829,16 @@ function todaysColoring() { const d = new Date(), n = Math.floor((d - new Date(d
 
 // 그림 → 선 도안: 그림의 검은 선(테두리)은 모두 살리고, 색이 크게 바뀌는 경계도 선으로 그어요
 const CL_LINE = { blur: .8, pct: .88, min: .3, speck: 8, grow: 1 };
+// 표시된 칸까지의 거리 (3-4 체임퍼, 1칸 = 3)
+function chamfer(mask, W, H) {
+  const n = W * H, D = new Uint16Array(n);
+  for (let i = 0; i < n; i++) D[i] = mask[i] ? 0 : 60000;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; let d = D[i]; if (!d) continue;
+    if (x > 0) d = Math.min(d, D[i - 1] + 3); if (y > 0) { d = Math.min(d, D[i - W] + 3); if (x > 0) d = Math.min(d, D[i - W - 1] + 4); if (x < W - 1) d = Math.min(d, D[i - W + 1] + 4); } D[i] = d; }
+  for (let y = H - 1; y >= 0; y--) for (let x = W - 1; x >= 0; x--) { const i = y * W + x; let d = D[i]; if (!d) continue;
+    if (x < W - 1) d = Math.min(d, D[i + 1] + 3); if (y < H - 1) { d = Math.min(d, D[i + W] + 3); if (x < W - 1) d = Math.min(d, D[i + W + 1] + 4); if (x > 0) d = Math.min(d, D[i + W - 1] + 4); } D[i] = d; }
+  return D;
+}
 function lineArt(img, W) {
   const LV = CL_LINE;
   const H = Math.round(W * img.naturalHeight / img.naturalWidth), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
@@ -863,6 +873,25 @@ function lineArt(img, W) {
     const t2 = new Uint8Array(n);
     for (let i = 0; i < n; i++) if (thick[i]) { t2[i] = 1; const x = i % W; if (x > 0) t2[i - 1] = 1; if (x < W - 1) t2[i + 1] = 1; if (i >= W) t2[i - W] = 1; if (i < n - W) t2[i + W] = 1; }
     thick = t2;
+  }
+  // 🖼 바깥 윤곽선: 종이 배경과 그림 사이에 선을 하나 더 그어요 (테두리에 틈이 있어도 배경으로 새지 않게)
+  //  잉크·색칠된 곳을 넉넉히 부풀려 틈을 막고 → 가장자리에서 종이를 따라 들어온 '배경' → 다시 줄여 실제 모양 → 그 경계가 윤곽선
+  const OG = 9, ink = new Uint8Array(n);
+  for (let i = 0; i < n; i++) { const mx = Math.max(R[i], Gc[i], Bc[i]), mn = Math.min(R[i], Gc[i], Bc[i]); ink[i] = (thick[i] || mx < 0.62 || mx - mn > 0.16) ? 1 : 0; }
+  const dI = chamfer(ink, W, H), open = new Uint8Array(n);
+  for (let i = 0; i < n; i++) open[i] = dI[i] > 3 * OG ? 1 : 0;
+  const bg = new Uint8Array(n), st2 = [];
+  for (let x = 0; x < W; x++) for (const y of [0, H - 1]) { const i = y * W + x; if (open[i] && !bg[i]) { bg[i] = 1; st2.push(i); } }
+  for (let y = 0; y < H; y++) for (const x of [0, W - 1]) { const i = y * W + x; if (open[i] && !bg[i]) { bg[i] = 1; st2.push(i); } }
+  while (st2.length) { const i = st2.pop(), x = i % W; for (const k of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) if (k >= 0 && k < n && open[k] && !bg[k]) { bg[k] = 1; st2.push(k); } }
+  let bgN = 0; for (let i = 0; i < n; i++) bgN += bg[i];
+  if (bgN > n * 0.08) {                              // 종이 배경이 있는 그림만 (꽉 찬 그림은 그대로)
+    const dB = chamfer(bg, W, H), back = new Uint8Array(n);
+    for (let i = 0; i < n; i++) back[i] = dB[i] <= 3 * OG ? 1 : 0;      // 배경을 다시 키워 실제 모양에 맞춰요
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+      const i = y * W + x; if (!back[i]) continue;
+      if (!back[i - 1] || !back[i + 1] || !back[i - W] || !back[i + W]) { thick[i] = 1; thick[i - 1] = 1; thick[i - W] = 1; }
+    }
   }
   return { W, H, line: thick };
 }
@@ -912,19 +941,37 @@ function clPush() { CL.undo.push(CL.paint.slice()); if (CL.undo.length > 20) CL.
 function clUndo() { if (!CL || !CL.undo.length) return; CL.paint = CL.undo.pop(); clDraw(); clStore(); }
 function clReset() { if (!CL) return; clPush(); CL.paint.fill(255); clDraw(); clStore(); }
 function clStore() { try { store('jjcm_color_' + CL.a.id, CL.cv.toDataURL('image/jpeg', .8)); } catch (e) {} }
+// 선까지의 거리 (3-4 체임퍼 거리, 1칸 = 3) · 도안마다 한 번만 계산
+function lineDist(LA) { return LA.dist || (LA.dist = chamfer(LA.line, LA.W, LA.H)); }
+// 🪣 채우기: 선에 작은 틈(약 6칸)이 있어도 새어 나가지 않게
+//  1) 선에서 GAP칸 넘게 떨어진 '넓은 곳'만 따라 퍼지고 (좁은 틈은 못 지나가요)
+//  2) 넓은 곳에서 선까지 남은 가장자리 띠를 채워요
+const CL_GAP = 3;
 function clFill(x, y) {
-  const { W, H, line } = CL.LA, P = CL.paint, [r, g, b] = clRGB(CL.color), s0 = y * W + x;
+  const { W, H, line } = CL.LA, n = W * H, P = CL.paint, [r, g, b] = clRGB(CL.color), s0 = y * W + x;
   if (line[s0]) return;
   clPush();
-  const seen = new Uint8Array(W * H), st = [s0]; seen[s0] = 1;
-  while (st.length) {
-    const i = st.pop(), o = i * 4; P[o] = r; P[o + 1] = g; P[o + 2] = b;
-    const xx = i % W;
-    if (xx > 0 && !seen[i - 1] && !line[i - 1]) { seen[i - 1] = 1; st.push(i - 1); }
-    if (xx < W - 1 && !seen[i + 1] && !line[i + 1]) { seen[i + 1] = 1; st.push(i + 1); }
-    if (i >= W && !seen[i - W] && !line[i - W]) { seen[i - W] = 1; st.push(i - W); }
-    if (i < W * (H - 1) && !seen[i + W] && !line[i + W]) { seen[i + W] = 1; st.push(i + W); }
+  const D = lineDist(CL.LA), R = 3 * CL_GAP, reg = new Uint8Array(n);
+  const nb = (i, f) => { const xx = i % W; if (xx > 0) f(i - 1); if (xx < W - 1) f(i + 1); if (i >= W) f(i - W); if (i < n - W) f(i + W); };
+  // 누른 곳에서 가까운 넓은 곳 찾기 (선을 넘지 않고, 몇 칸 안에서)
+  let seed = -1;
+  { const dist = new Map([[s0, 0]]), q = [s0];
+    for (let h = 0; h < q.length && seed < 0; h++) { const i = q[h], d = dist.get(i); if (D[i] >= R) { seed = i; break; } if (d >= CL_GAP * 3) continue;
+      nb(i, k => { if (!line[k] && !dist.has(k)) { dist.set(k, d + 1); q.push(k); } }); } }
+  if (seed >= 0) {
+    const st = [seed]; reg[seed] = 1;
+    while (st.length) { const i = st.pop(); nb(i, k => { if (!reg[k] && D[k] >= R) { reg[k] = 1; st.push(k); } }); }
+    // 가장자리 띠 채우기 (넓은 곳에서 GAP×1.5 칸까지, 선은 넘지 않고)
+    let front = []; for (let i = 0; i < n; i++) if (reg[i]) front.push(i);
+    for (let step = 0; step < Math.ceil(CL_GAP * 1.5) + 1 && front.length; step++) {
+      const nx = []; front.forEach(i => nb(i, k => { if (!reg[k] && !line[k]) { reg[k] = 1; nx.push(k); } })); front = nx;
+    }
+    reg[s0] = 1;
+  } else {                                   // 아주 좁은 칸: 그냥 선 안쪽을 채워요
+    const st = [s0]; reg[s0] = 1;
+    while (st.length) { const i = st.pop(); nb(i, k => { if (!reg[k] && !line[k]) { reg[k] = 1; st.push(k); } }); }
   }
+  for (let i = 0; i < n; i++) if (reg[i]) { const o = i * 4; P[o] = r; P[o + 1] = g; P[o + 2] = b; }
   clDraw(); clStore();
 }
 function clBrush(x, y, rad) {
