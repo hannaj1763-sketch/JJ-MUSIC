@@ -1497,11 +1497,12 @@ function vidCopyright(g, box, sec, total) {
   g.font = "600 26px 'Noto Sans KR', sans-serif"; g.fillStyle = 'rgba(255,255,255,.6)'; g.fillText('© JJ · AGJJ', VW - 36, 56);
   const endA = Math.max(0, Math.min(1, (sec - (total - 2.2)) / .5));
   if (endA > 0) {
-    g.globalAlpha = endA; g.fillStyle = 'rgba(8,10,16,.82)'; g.fillRect(0, VH / 2 - 210, VW, 420);
-    g.textAlign = 'center'; g.fillStyle = '#fde68a'; g.font = "900 64px 'Noto Sans KR', sans-serif"; g.fillText('그림 © JJ', VW / 2, VH / 2 - 70);
-    g.fillStyle = '#fff'; g.font = "600 36px 'Noto Sans KR', sans-serif"; g.fillText('이 영상 속 그림의 저작권은 작가 JJ에게 있어요', VW / 2, VH / 2 + 10);
-    g.fillStyle = '#cbd5e1'; g.font = "500 30px 'Noto Sans KR', sans-serif"; g.fillText('무단 사용·복제·재배포 금지 · All rights reserved', VW / 2, VH / 2 + 70);
-    g.fillText('AGJJ 아그짜 · Art Gallery of J.J', VW / 2, VH / 2 + 130);
+    const y0 = 1500;      // 그림·말씀을 가리지 않게 아래쪽 띠에
+    g.globalAlpha = endA; g.fillStyle = 'rgba(8,10,16,.9)'; g.fillRect(0, y0, VW, VH - y0);
+    g.textAlign = 'center'; g.fillStyle = '#fde68a'; g.font = "900 60px 'Noto Sans KR', sans-serif"; g.fillText('그림 © JJ', VW / 2, y0 + 90);
+    g.fillStyle = '#fff'; g.font = "600 34px 'Noto Sans KR', sans-serif"; g.fillText('이 영상 속 그림의 저작권은 작가 JJ에게 있어요', VW / 2, y0 + 160);
+    g.fillStyle = '#cbd5e1'; g.font = "500 29px 'Noto Sans KR', sans-serif"; g.fillText('무단 사용·복제·재배포 금지 · All rights reserved', VW / 2, y0 + 220);
+    g.fillText('AGJJ 아그짜 · Art Gallery of J.J', VW / 2, y0 + 275);
   }
   g.restore();
 }
