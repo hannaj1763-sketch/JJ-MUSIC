@@ -97,6 +97,11 @@
   .cp-dock .cl-pal button.eraser span { font-size: 11px; bottom: auto; top: 50%; transform: translateY(-50%); }
   .cl-bigbtn { width: 100%; margin-top: 10px; padding: 12px; border-radius: 14px; border: 1px solid var(--gold); background: rgba(240,196,99,.12); color: var(--gold); font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit; }
   body.big .cl-bigbtn { font-size: 20px; padding: 16px; }
+  .vid-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 4px; }
+  .vid-types button { text-align: left; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 14px; padding: 12px; cursor: pointer; font-family: inherit; }
+  .vid-types button b { display: block; font-size: 15px; } .vid-types button small { color: var(--sub); font-size: 12px; line-height: 1.4; }
+  .vid-types button:disabled { opacity: .45; }
+  .vid-types button.hot { border-color: #ec4899; background: linear-gradient(135deg, rgba(236,72,153,.16), rgba(139,92,246,.16)); }
   .cl-lv { display: flex; gap: 6px; margin-top: 12px; }
   .cl-lv button { flex: 1; padding: 9px 4px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .cl-lv button small { font-size: 11px; color: var(--sub); font-weight: 400; }
@@ -1003,6 +1008,7 @@ function openColoring(id) {
     <div class="cl-pal" id="clPal"></div>
     <div class="cl-legend">${BIG ? '빨강은 도, 주황은 레, 노랑은 미 … 색마다 음이 있어요. 색을 누르면 그 음이 들려요.' : ''}</div><div class="cl-legend nb">위 줄: 탁한 색 = ♭ · 가운데: 보통 = 제자리음 · 아래 줄: 쨍한 색 = ♯ &nbsp;·&nbsp; 칠하지 않은 흰 곳은 쉼표예요</div>
     <div class="ctrl"><button class="btn play" onclick="clSing()">🎵 내 색으로 노래하기</button></div>
+    <div class="ctrl"><button class="btn sub" onclick="clVideo()" style="border-color:#ec4899">🎬 색칠 과정 영상 만들기</button></div>
     <div class="ctrl"><button class="btn sub" onclick="clSave()">🖼 색칠한 그림 저장</button><button class="btn sub" onclick="clPaper(true)">🔍 크게 칠하기</button></div>`;
   $('clPal').innerHTML = (BIG ? [PAL[1]] : PAL).map(row => row.map(p => `<button style="background:${p.col}" data-col="${p.col}" data-say="${COLORS[p.c].ko} ${p.name}" data-midi="${60 + COLORS[p.c].pc + (p.r === 0 ? -1 : p.r === 2 ? 1 : 0)}" onclick="clPick(this)"><span>${BIG ? COLORS[p.c].ko + '<br>' : ''}${p.name}</span></button>`).join('')).join('') +
     `<button class="eraser" data-col="#ffffff" data-say="지우개" onclick="clPick(this)"><span>지우개</span></button>`;
@@ -1011,7 +1017,7 @@ function openColoring(id) {
   img.onload = () => {
     CL_IMG = img;
     const LA = lineArt(img, 640), cv = $('clCv'); cv.width = LA.W; cv.height = LA.H;
-    CL = { a, LA, cv, g: cv.getContext('2d', { willReadFrequently: true }), color: PAL[1][0].col, tool: 'fill', undo: [] };
+    CL = { a, LA, cv, g: cv.getContext('2d', { willReadFrequently: true }), color: PAL[1][0].col, tool: 'fill', undo: [], undoLog: [], log: (() => { try { return JSON.parse(store('jjcm_clog_' + a.id) || '[]'); } catch (e) { return []; } })() };
     CL.paint = new Uint8ClampedArray(LA.W * LA.H * 4).fill(255);           // 칠한 색 (처음엔 흰 종이)
     try { const saved = store('jjcm_color_' + a.id); if (saved) { const im = new Image(); im.onload = () => { const t = document.createElement('canvas'); t.width = LA.W; t.height = LA.H; const tg = t.getContext('2d'); tg.drawImage(im, 0, 0, LA.W, LA.H); CL.paint.set(tg.getImageData(0, 0, LA.W, LA.H).data); clDraw(); }; im.src = saved; } } catch (e) {}
     clPick($('clPal').children[BIG ? 0 : 7], true); clDraw(); clSetup();
@@ -1029,15 +1035,17 @@ function clPick(btn, quiet) {
 }
 function clTool(t) { CL.tool = t; $('tFill').classList.toggle('on', t === 'fill'); $('tBrush').classList.toggle('on', t === 'brush'); }
 function clRGB(col) { if (col[0] === '#') return [255, 255, 255]; return col.match(/\d+/g).map(Number); }
+let CL_REPLAY = false;          // 🎬 색칠 과정 영상을 만드는 동안엔 화면·저장을 건드리지 않아요
 function clDraw() {
+  if (CL_REPLAY) return;
   const { W, H, line } = CL.LA, im = CL.g.createImageData(W, H), d = im.data, P = CL.paint;
   for (let i = 0; i < W * H; i++) { const o = i * 4; if (line[i]) { d[o] = d[o + 1] = d[o + 2] = 40; } else { d[o] = P[o]; d[o + 1] = P[o + 1]; d[o + 2] = P[o + 2]; } d[o + 3] = 255; }
   CL.g.putImageData(im, 0, 0);
 }
-function clPush() { CL.undo.push(CL.paint.slice()); if (CL.undo.length > 20) CL.undo.shift(); }
-function clUndo() { if (!CL || !CL.undo.length) return; CL.paint = CL.undo.pop(); clDraw(); clStore(); }
-function clReset() { if (!CL) return; clPush(); CL.paint.fill(255); clDraw(); clStore(); }
-function clStore() { try { store('jjcm_color_' + CL.a.id, CL.cv.toDataURL('image/jpeg', .8)); } catch (e) {} }
+function clPush() { if (CL_REPLAY) return; CL.undo.push(CL.paint.slice()); CL.undoLog.push(CL.log.slice()); if (CL.undo.length > 20) { CL.undo.shift(); CL.undoLog.shift(); } }
+function clUndo() { if (!CL || !CL.undo.length) return; CL.paint = CL.undo.pop(); CL.log = CL.undoLog.pop() || []; clDraw(); clStore(); }
+function clReset() { if (!CL) return; clPush(); CL.paint.fill(255); CL.log = []; clDraw(); clStore(); }
+function clStore() { if (CL_REPLAY) return; try { store('jjcm_color_' + CL.a.id, CL.cv.toDataURL('image/jpeg', .8)); store('jjcm_clog_' + CL.a.id, JSON.stringify(CL.log.slice(-3000))); } catch (e) {} }
 // 선까지의 거리 (3-4 체임퍼 거리, 1칸 = 3) · 도안마다 한 번만 계산
 function lineDist(LA) { return LA.dist || (LA.dist = chamfer(LA.line, LA.W, LA.H)); }
 // 🪣 채우기: 선에 작은 틈(약 6칸)이 있어도 새어 나가지 않게
@@ -1047,6 +1055,7 @@ const CL_GAP = 3;
 function clFill(x, y) {
   const { W, H, line } = CL.LA, n = W * H, P = CL.paint, [r, g, b] = clRGB(CL.color), s0 = y * W + x;
   if (line[s0]) return;
+  if (!CL_REPLAY) CL.log.push({ f: [x, y], c: CL.color });
   clPush();
   const D = lineDist(CL.LA), R = 3 * CL_GAP, reg = new Uint8Array(n);
   const nb = (i, f) => { const xx = i % W; if (xx > 0) f(i - 1); if (xx < W - 1) f(i + 1); if (i >= W) f(i - W); if (i < n - W) f(i + W); };
@@ -1073,6 +1082,7 @@ function clFill(x, y) {
 }
 function clBrush(x, y, rad) {
   const { W, H } = CL.LA, P = CL.paint, [r, g, b] = clRGB(CL.color);
+  if (!CL_REPLAY) CL.log.push({ b: [x, y, rad], c: CL.color });
   for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue; const o = (yy * W + xx) * 4; P[o] = r; P[o + 1] = g; P[o + 2] = b; }
 }
 function clSetup() {
@@ -1104,7 +1114,7 @@ function clPaper(on) {
     const d = document.createElement('div'); d.className = 'cl-paper'; d.id = 'clPaper';
     d.innerHTML = `<div class="cp-top"><button onclick="clPaper(false)">← 돌아가기</button>
         <div class="zoom"><button onclick="clZoom(-1)" aria-label="작게">－</button><button onclick="clZoom(1)" aria-label="크게">＋</button></div>
-        <button class="sing" onclick="clPaper(false); clSing()">🎵 노래</button></div>
+        <button class="sing" onclick="clPaper(false); clSing()">🎵 노래</button><button class="sing" style="background:#ec4899;border-color:#ec4899;color:#fff" onclick="clPaper(false); clVideo()">🎬</button></div>
       <div class="cp-scroll" id="cpScroll"></div><div class="cp-dock" id="cpDock"></div>`;
     document.body.appendChild(d);
     CL.home = { tools: document.querySelector('.cl-tools'), pal: $('clPal') };
@@ -1179,7 +1189,9 @@ function openArt(id) {
     <div class="ctrl"><button class="btn play" id="playBtn" onclick="toggle()" disabled>▶ 그림이 노래해요</button></div>
     <div class="bar"><div id="prog"></div></div>
     <div class="ctrl"><button class="btn sub" id="pngBtn" onclick="savePng()" disabled>🖼 선 악보 저장</button><button class="btn sub" id="wavBtn" onclick="saveWav()" disabled>🎧 소리 저장</button></div>
-    <div class="ctrl"><button class="btn play" id="vidBtn" onclick="makeVideo()" disabled style="background:linear-gradient(135deg,#ec4899,#8b5cf6,#3b82f6);color:#fff">🎬 영상 저장 (쇼츠·릴스용 세로 영상)</button></div>
+    <div class="sec">🎬 영상 만들기 <span style="color:var(--sub);font-weight:400">· 쇼츠·릴스용 세로 영상</span></div>
+    <div class="vid-types" id="vidTypes"></div>
+    <button class="btn play" id="vidBtn" onclick="makeVideo()" disabled style="display:none">🎬</button>
     <div class="layers">
       <div class="sec" style="margin-top:0">🎚 역할별로 쌓기 <span style="color:var(--sub);font-weight:400">· 모두 같은 화음을 따라가요</span></div>
       <div class="rule" id="keyInfo" style="margin-top:4px"></div>
@@ -1292,7 +1304,7 @@ function build() {
   $('meta').innerText = `${pathLabel()} · ${STYLES[cur.style].e} ${STYLES[cur.style].ko} · ${Math.round(cur.song.sec)}초 · 빠르기 ${cur.song.bpm} · 음 ${notes}개`;
   preview(); enableBtns(true); if (cur.mix) renderRoles();
 }
-function enableBtns(on) { ['playBtn', 'pngBtn', 'wavBtn', 'buildBtn', 'vidBtn'].forEach(id => $(id) && ($(id).disabled = !on)); }
+function enableBtns(on) { ['playBtn', 'pngBtn', 'wavBtn', 'buildBtn', 'vidBtn'].forEach(id => $(id) && ($(id).disabled = !on)); renderVidTypes(on); }
 // 연주 전: 길을 흐린 점선으로 미리 보여 주기
 function preview() {
   const W = fx.width / (devicePixelRatio || 1), H = fx.height / (devicePixelRatio || 1), P = cur.song.path;
@@ -1447,20 +1459,61 @@ function videoMime() {
   const c = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
   return c.find(m => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
 }
-async function makeVideo() {
+const VW = 1080, VH = 1920;
+const VERSE = Q.get('verse') ? { text: Q.get('verse'), ref: Q.get('ref') || '' } : null;     // 📜 말씀 쇼츠: 앱의 말씀카드에서 넘어와요
+// 영상 종류 고르기 (노래가 준비되면 보여요)
+function renderVidTypes(on) {
+  const box = $('vidTypes'); if (!box) return;
+  const custom = cur && cur.a && cur.a.custom, log = custom ? clLogOf(cur.a.base) : [];
+  const T = [
+    ['makeVideo()', '🎼 선 악보', '그림 위로 색과 음을 잇는 빛의 선'],
+    ['drawVideo()', '🖌 그려지는 영상', '빈 도화지에 붓질하듯 그림이 완성돼요'],
+  ];
+  if (custom) T.push(['clVideoFromSong()', '🖍 색칠 과정', log.length ? `내가 칠한 순서대로 다시 보여줘요 (${log.length}번 칠함)` : '칠한 그림이 차례로 나타나요']);
+  if (VERSE) T.unshift(['verseVideo()', '📜 말씀 쇼츠', (VERSE.ref || '오늘의 말씀') + ' · 한 글자씩 나타나요']);
+  box.innerHTML = T.map(([fn, t, d], i) => `<button ${on ? '' : 'disabled'} class="${i === 0 && (VERSE || custom) ? 'hot' : ''}" onclick="${fn}"><b>${t}</b><small>${d}</small></button>`).join('');
+}
+function vidBg(img) {             // 흐린 배경
+  const bg = document.createElement('canvas'); bg.width = VW; bg.height = VH;
+  const g = bg.getContext('2d'), s = Math.max(VW / img.width, VH / img.height); g.filter = 'blur(40px) brightness(.4) saturate(1.2)'; g.drawImage(img, (VW - img.width * s) / 2, (VH - img.height * s) / 2, img.width * s, img.height * s); g.filter = 'none';
+  const vg = g.createRadialGradient(VW / 2, VH / 2, VH * .2, VW / 2, VH / 2, VH * .75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.55)'); g.fillStyle = vg; g.fillRect(0, 0, VW, VH);
+  return bg;
+}
+function vidBox(img, maxW = 960, maxH = 1180, top = 330) { let aw = maxW, ah = aw * img.height / img.width; if (ah > maxH) { ah = maxH; aw = ah * img.width / img.height; } return { aw: Math.round(aw), ah: Math.round(ah), ax: Math.round((VW - aw) / 2), ay: Math.round(top + (maxH - ah) / 2) }; }
+function vidTitle(g, kicker, title) {
+  g.textAlign = 'center'; g.fillStyle = '#e6c294'; g.font = "700 40px 'Noto Sans KR', sans-serif"; g.fillText(kicker, VW / 2, 150);
+  g.fillStyle = '#fff'; let fs = 64; do { g.font = `900 ${fs}px 'Noto Sans KR', sans-serif`; fs -= 2; } while (g.measureText(title).width > 980 && fs > 34); g.fillText(title, VW / 2, 240);
+}
+function vidFoot(g, sub, frac) {
+  g.textAlign = 'center'; g.fillStyle = '#cbd5e1'; g.font = "500 34px 'Noto Sans KR', sans-serif"; g.fillText(sub, VW / 2, 1712);
+  g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(140, 1760, VW - 280, 8);
+  g.fillStyle = '#e6c294'; g.fillRect(140, 1760, (VW - 280) * Math.max(0, Math.min(1, frac)), 8);
+  g.fillStyle = 'rgba(255,255,255,.85)'; g.font = "600 30px 'Noto Sans KR', sans-serif"; g.fillText('그림 © JJ · 무단 사용·복제 금지 · AGJJ', VW / 2, 1840);
+}
+// © 그림 저작권 표시: 모든 영상에 ① 그림 오른쪽 아래 '© JJ' ② 화면 위 작은 표시 ③ 마지막 장면에 저작권 안내
+function vidCopyright(g, box, sec, total) {
+  g.save(); g.textAlign = 'right';
+  if (box) { g.font = "700 30px 'Noto Sans KR', sans-serif"; g.fillStyle = 'rgba(0,0,0,.45)'; g.fillText('© JJ', box.ax + box.aw - 14, box.ay + box.ah - 14); g.fillStyle = 'rgba(255,255,255,.8)'; g.fillText('© JJ', box.ax + box.aw - 16, box.ay + box.ah - 16); }
+  g.font = "600 26px 'Noto Sans KR', sans-serif"; g.fillStyle = 'rgba(255,255,255,.6)'; g.fillText('© JJ · AGJJ', VW - 36, 56);
+  const endA = Math.max(0, Math.min(1, (sec - (total - 2.2)) / .5));
+  if (endA > 0) {
+    g.globalAlpha = endA; g.fillStyle = 'rgba(8,10,16,.82)'; g.fillRect(0, VH / 2 - 210, VW, 420);
+    g.textAlign = 'center'; g.fillStyle = '#fde68a'; g.font = "900 64px 'Noto Sans KR', sans-serif"; g.fillText('그림 © JJ', VW / 2, VH / 2 - 70);
+    g.fillStyle = '#fff'; g.font = "600 36px 'Noto Sans KR', sans-serif"; g.fillText('이 영상 속 그림의 저작권은 작가 JJ에게 있어요', VW / 2, VH / 2 + 10);
+    g.fillStyle = '#cbd5e1'; g.font = "500 30px 'Noto Sans KR', sans-serif"; g.fillText('무단 사용·복제·재배포 금지 · All rights reserved', VW / 2, VH / 2 + 70);
+    g.fillText('AGJJ 아그짜 · Art Gallery of J.J', VW / 2, VH / 2 + 130);
+  }
+  g.restore();
+}
+function vidFrame(g, ax, ay, aw, ah) {
+  g.save(); g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 50; g.fillStyle = '#000'; g.fillRect(ax - 10, ay - 10, aw + 20, ah + 20); g.restore();
+  g.strokeStyle = 'rgba(230,194,148,.7)'; g.lineWidth = 4; g.strokeRect(ax - 10, ay - 10, aw + 20, ah + 20);
+}
+// 공통: 노래를 한 번 연주하면서 화면(1080×1920)과 소리를 함께 녹화해요
+async function recordVideo(song, draw, fname, tail = 1.8, box = null) {
   if (!window.MediaRecorder) { alert('이 기기에서는 영상 저장을 할 수 없어요.'); return; }
   stop();
-  const img = $('art'), VW = 1080, VH = 1920, song = cur.song, spb = 60 / song.bpm;
-  // 배경(흐리게) · 그림(살짝 어둡게) 미리 그려 두기
-  const bg = document.createElement('canvas'); bg.width = VW; bg.height = VH;
-  { const g = bg.getContext('2d'), s = Math.max(VW / img.naturalWidth, VH / img.naturalHeight); g.filter = 'blur(40px) brightness(.4) saturate(1.2)'; g.drawImage(img, (VW - img.naturalWidth * s) / 2, (VH - img.naturalHeight * s) / 2, img.naturalWidth * s, img.naturalHeight * s); g.filter = 'none';
-    const vg = g.createRadialGradient(VW / 2, VH / 2, VH * .2, VW / 2, VH / 2, VH * .75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.55)'); g.fillStyle = vg; g.fillRect(0, 0, VW, VH); }
-  let aw = 960, ah = aw * img.naturalHeight / img.naturalWidth; if (ah > 1180) { ah = 1180; aw = ah * img.naturalWidth / img.naturalHeight; }
-  const ax = (VW - aw) / 2, ay = 330 + (1180 - ah) / 2;
-  const pic = document.createElement('canvas'); pic.width = aw; pic.height = ah;
-  { const g = pic.getContext('2d'); g.filter = 'brightness(.66) saturate(.95)'; g.drawImage(img, 0, 0, aw, ah); }
-  const V = document.createElement('canvas'); V.width = VW; V.height = VH; const g = V.getContext('2d');
-  // 미리보기 창
+  const spb = 60 / song.bpm, V = document.createElement('canvas'); V.width = VW; V.height = VH; const g = V.getContext('2d');
   const ov = document.createElement('div'); ov.className = 'vid-ov';
   ov.innerHTML = `<div class="vid-box"><div class="vid-t">🎬 영상 만드는 중… <span id="vidSec"></span></div><div class="vid-s">곡이 끝날 때까지 화면을 그대로 두세요</div></div>`;
   ov.querySelector('.vid-box').prepend(V); document.body.appendChild(ov);
@@ -1469,45 +1522,161 @@ async function makeVideo() {
   const stream = V.captureStream(30); dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
   const mime = videoMime(), rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 6e6 } : { videoBitsPerSecond: 6e6 }), chunks = [];
   rec.ondataavailable = e => e.data.size && chunks.push(e.data);
-  const t0 = actx.currentTime + .6, total = song.beats * spb + 1.8;
+  const t0 = actx.currentTime + .6, total = song.beats * spb + tail;
   schedule(actx, out, song, inst, t0, { mix: cur.mix });
   rec.start(250);
-  const P = song.path, title = cur.a.title, sub = `${pathLabel()} · ${STYLES[cur.style].e} ${STYLES[cur.style].ko} · ${INST[inst].e} ${INST[inst].ko}`;
   const frame = () => {
     const now = actx.currentTime, beat = (now - t0) / spb;
-    g.drawImage(bg, 0, 0);
-    // 위: 제목
-    g.textAlign = 'center'; g.fillStyle = '#e6c294'; g.font = "700 40px 'Noto Sans KR', sans-serif"; g.fillText('🎨 J.J Color Music · 그림이 노래해요', VW / 2, 150);
-    g.fillStyle = '#fff'; let fs = 64; do { g.font = `900 ${fs}px 'Noto Sans KR', sans-serif`; fs -= 2; } while (g.measureText(title).width > 980 && fs > 34); g.fillText(title, VW / 2, 240);   // 긴 제목은 글씨를 줄여 한 줄에
-    // 액자 + 그림 + 선 악보
-    g.save(); g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 50; g.fillStyle = '#000'; g.fillRect(ax - 10, ay - 10, aw + 20, ah + 20); g.restore();
-    g.strokeStyle = 'rgba(230,194,148,.7)'; g.lineWidth = 4; g.strokeRect(ax - 10, ay - 10, aw + 20, ah + 20);
-    g.drawImage(pic, ax, ay);
-    g.save(); g.beginPath(); g.rect(ax, ay, aw, ah); g.clip(); g.translate(ax, ay); drawArt(g, aw, ah, P, beat); g.restore();
-    // 아래: 지금 음
-    let i = 0; while (i + 1 < P.length && P[i + 1].t <= beat) i++;
-    const q = P[i];
-    if (beat >= 0 && q) {
-      const label = q.rest ? '쉼표' : `♪ ${q.note.name}${typeof q.cell.kind === 'number' ? ' · ' + COLORS[q.cell.kind].ko : ''}`;
-      g.font = "700 46px 'Noto Sans KR', sans-serif"; const w = g.measureText(label).width + 110;
-      g.fillStyle = 'rgba(0,0,0,.55)'; g.beginPath(); g.roundRect ? g.roundRect(VW / 2 - w / 2, 1560, w, 86, 43) : g.rect(VW / 2 - w / 2, 1560, w, 86); g.fill();
-      if (!q.rest) { g.fillStyle = q.cell.col; g.beginPath(); g.arc(VW / 2 - w / 2 + 48, 1603, 16, 0, 6.29); g.fill(); }
-      g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(label, VW / 2 + 20, 1619);
-    }
-    g.fillStyle = '#cbd5e1'; g.font = "500 34px 'Noto Sans KR', sans-serif"; g.textAlign = 'center'; g.fillText(sub, VW / 2, 1712);
-    g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(140, 1760, VW - 280, 8);
-    g.fillStyle = '#e6c294'; g.fillRect(140, 1760, (VW - 280) * Math.max(0, Math.min(1, beat / song.beats)), 8);
-    g.fillStyle = 'rgba(255,255,255,.7)'; g.font = "500 28px 'Noto Sans KR', sans-serif"; g.fillText('그림 © JJ · AGJJ 아그짜', VW / 2, 1840);
-    const left = Math.max(0, Math.ceil(t0 + total - now)); const sEl = document.getElementById('vidSec'); if (sEl) sEl.innerText = left + '초';
+    draw(g, beat, now - t0, total); vidCopyright(g, box, now - t0, total);
+    const sEl = document.getElementById('vidSec'); if (sEl) sEl.innerText = Math.max(0, Math.ceil(t0 + total - now)) + '초';
     if (now < t0 + total) requestAnimationFrame(frame); else rec.stop();
   };
   rec.onstop = () => {
     try { out.disconnect(); } catch (e) {}
     ov.remove();
     const type = (mime || 'video/webm').split(';')[0], ext = type.includes('mp4') ? 'mp4' : 'webm';
-    download(URL.createObjectURL(new Blob(chunks, { type })), `JJ_artsong_${cur.a.id}_${cur.style}.${ext}`);
+    download(URL.createObjectURL(new Blob(chunks, { type })), `${fname}.${ext}`);
   };
   requestAnimationFrame(frame);
+}
+function nowLabel(g, P, beat) {
+  let i = 0; while (i + 1 < P.length && P[i + 1].t <= beat) i++;
+  const q = P[i]; if (!(beat >= 0 && q)) return;
+  const label = q.rest ? '쉼표' : `♪ ${q.note.name}${typeof q.cell.kind === 'number' ? ' · ' + COLORS[q.cell.kind].ko : ''}`;
+  g.font = "700 46px 'Noto Sans KR', sans-serif"; const w = g.measureText(label).width + 110;
+  g.fillStyle = 'rgba(0,0,0,.55)'; g.beginPath(); g.roundRect ? g.roundRect(VW / 2 - w / 2, 1560, w, 86, 43) : g.rect(VW / 2 - w / 2, 1560, w, 86); g.fill();
+  if (!q.rest) { g.fillStyle = q.cell.col; g.beginPath(); g.arc(VW / 2 - w / 2 + 48, 1603, 16, 0, 6.29); g.fill(); }
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(label, VW / 2 + 20, 1619);
+}
+const vidSub = () => `${pathLabel()} · ${STYLES[cur.style].e} ${STYLES[cur.style].ko} · ${INST[inst].e} ${INST[inst].ko}`;
+
+// 🎼 선 악보 영상 (기존)
+function makeVideo() {
+  const img = $('art'), song = cur.song, bg = vidBg(img), { aw, ah, ax, ay } = vidBox(img);
+  const pic = document.createElement('canvas'); pic.width = aw; pic.height = ah; { const g = pic.getContext('2d'); g.filter = 'brightness(.66) saturate(.95)'; g.drawImage(img, 0, 0, aw, ah); }
+  const P = song.path, title = cur.a.title, sub = vidSub();
+  recordVideo(song, (g, beat) => {
+    g.drawImage(bg, 0, 0); vidTitle(g, '🎨 J.J Color Music · 그림이 노래해요', title);
+    vidFrame(g, ax, ay, aw, ah); g.drawImage(pic, ax, ay);
+    g.save(); g.beginPath(); g.rect(ax, ay, aw, ah); g.clip(); g.translate(ax, ay); drawArt(g, aw, ah, P, beat); g.restore();
+    nowLabel(g, P, beat); vidFoot(g, sub, beat / song.beats);
+  }, `JJ_artsong_${cur.a.id}_${cur.style}`, 2.6, { ax, ay, aw, ah });
+}
+
+// 🖌 그려지는 영상: 밑그림 위에, 노래가 지나가는 칸마다 붓질하듯 색이 칠해지고 마지막에 완성작
+function drawVideo() {
+  const img = $('art'), song = cur.song, bg = vidBg(img), { aw, ah, ax, ay } = vidBox(img), P = song.path;
+  const pic = document.createElement('canvas'); pic.width = aw; pic.height = ah; pic.getContext('2d').drawImage(img, 0, 0, aw, ah);
+  // 연필 밑그림 (선 도안을 연하게)
+  const sk = document.createElement('canvas'); sk.width = aw; sk.height = ah;
+  { const sg = sk.getContext('2d'); sg.fillStyle = '#fbf7ef'; sg.fillRect(0, 0, aw, ah);
+    try { const LA = lineArt(img, 640), t = document.createElement('canvas'); t.width = LA.W; t.height = LA.H; const tg = t.getContext('2d'), im = tg.createImageData(LA.W, LA.H);
+      for (let i = 0; i < LA.W * LA.H; i++) { const o = i * 4; im.data[o] = im.data[o + 1] = im.data[o + 2] = 70; im.data[o + 3] = LA.line[i] ? 150 : 0; } tg.putImageData(im, 0, 0); sg.drawImage(t, 0, 0, aw, ah); } catch (e) {} }
+  const mask = document.createElement('canvas'); mask.width = aw; mask.height = ah; const mg = mask.getContext('2d');
+  const tmp = document.createElement('canvas'); tmp.width = aw; tmp.height = ah; const tg = tmp.getContext('2d');
+  const cw = aw / GRID, rnd = seeded(hashStr(cur.a.id));
+  const notes = P.filter(q => !q.rest); let k = 0, brush = null;
+  const stroke = (q) => {        // 칸 둘레에 붓 자국 몇 번
+    const cx = q.cell.x * aw, cy = q.cell.y * ah;
+    for (let j = 0; j < 7; j++) {
+      const a = rnd() * 6.28, len = cw * (.6 + rnd() * .9), x0 = cx + (rnd() - .5) * cw * 1.4, y0 = cy + (rnd() - .5) * cw * 1.4;
+      mg.lineCap = 'round'; mg.strokeStyle = 'rgba(0,0,0,.85)'; mg.lineWidth = cw * (.35 + rnd() * .4);
+      mg.beginPath(); mg.moveTo(x0, y0); mg.quadraticCurveTo(x0 + Math.cos(a + 1) * len * .5, y0 + Math.sin(a + 1) * len * .5, x0 + Math.cos(a) * len, y0 + Math.sin(a) * len); mg.stroke();
+    }
+    brush = [cx, cy];
+  };
+  const title = cur.a.title, sub = vidSub();
+  recordVideo(song, (g, beat, sec, total) => {
+    while (k < notes.length && notes[k].t <= beat) stroke(notes[k++]);
+    const endFade = Math.max(0, Math.min(1, (beat - song.beats * .82) / (song.beats * .14)));   // 끝 무렵 전체가 완성돼요
+    g.drawImage(bg, 0, 0); vidTitle(g, '🖌 JJ가 그리는 중…', title);
+    vidFrame(g, ax, ay, aw, ah); g.drawImage(sk, ax, ay);
+    tg.clearRect(0, 0, aw, ah); tg.globalCompositeOperation = 'source-over'; tg.drawImage(pic, 0, 0); tg.globalCompositeOperation = 'destination-in'; tg.drawImage(mask, 0, 0); tg.globalCompositeOperation = 'source-over';
+    g.drawImage(tmp, ax, ay);
+    if (endFade > 0) { g.globalAlpha = endFade; g.drawImage(pic, ax, ay); g.globalAlpha = 1; }
+    if (brush && endFade < 1 && beat >= 0) { g.font = '84px serif'; g.textAlign = 'center'; g.fillText('🖌', ax + brush[0] + 20, ay + brush[1] - 10); }
+    if (endFade >= 1) { g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(0, 1530, VW, 120); g.fillStyle = '#fde68a'; g.font = "900 60px 'Noto Sans KR', sans-serif"; g.textAlign = 'center'; g.fillText('✨ 완성!', VW / 2, 1612); }
+    else nowLabel(g, P, beat);
+    vidFoot(g, sub, beat / song.beats);
+  }, `JJ_drawing_${cur.a.id}_${cur.style}`, 3.2, { ax, ay, aw, ah });
+}
+
+// 📜 말씀 쇼츠: 카드가 돌아 그림이 나오고, 말씀이 한 글자씩 나타나요
+function verseVideo() {
+  if (!VERSE) return;
+  const img = $('art'), song = cur.song, bg = vidBg(img), { aw, ah, ax, ay } = vidBox(img, 900, 1120, 360), spb = 60 / song.bpm;
+  const pic = document.createElement('canvas'); pic.width = aw; pic.height = ah; { const g = pic.getContext('2d'); g.drawImage(img, 0, 0, aw, ah); }
+  const text = VERSE.text.trim(), ref = VERSE.ref, chars = [...text];
+  // 줄 나누기 (가로 820px)
+  const mg = document.createElement('canvas').getContext('2d'); const fs = text.length > 90 ? 44 : text.length > 50 ? 52 : 60; mg.font = `700 ${fs}px 'Noto Serif KR', 'Noto Sans KR', serif`;
+  const lines = []; let line = '';
+  chars.forEach(ch => { if (mg.measureText(line + ch).width > 820 && line) { lines.push(line); line = ch.trim() ? ch : ''; } else line += ch; }); if (line) lines.push(line);
+  const lh = fs * 1.55, boxH = lines.length * lh + 160;
+  recordVideo(song, (g, beat, sec, total) => {
+    g.drawImage(bg, 0, 0);
+    g.textAlign = 'center'; g.fillStyle = '#e6c294'; g.font = "700 40px 'Noto Sans KR', sans-serif"; g.fillText('📜 오늘의 말씀', VW / 2, 170);
+    // 카드가 돌아서 나타나요 (0~1.4초)
+    const flip = Math.max(0, Math.min(1, sec / 1.4)), sx = Math.abs(Math.cos((1 - flip) * Math.PI / 2 * 2)) || .02, showFront = flip > .5;
+    g.save(); g.translate(VW / 2, ay + ah / 2); g.scale(Math.max(.02, sx), 1);
+    g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 60; g.fillStyle = '#000'; g.fillRect(-aw / 2 - 12, -ah / 2 - 12, aw + 24, ah + 24); g.shadowBlur = 0;
+    if (showFront) { g.drawImage(pic, -aw / 2, -ah / 2); }
+    else { const gr = g.createLinearGradient(-aw / 2, -ah / 2, aw / 2, ah / 2); gr.addColorStop(0, '#3b4f8f'); gr.addColorStop(1, '#8b5cf6'); g.fillStyle = gr; g.fillRect(-aw / 2, -ah / 2, aw, ah); g.fillStyle = 'rgba(255,255,255,.85)'; g.font = "900 120px Georgia, serif"; g.fillText('JJ', 0, 40); }
+    g.strokeStyle = 'rgba(230,194,148,.8)'; g.lineWidth = 5; g.strokeRect(-aw / 2 - 12, -ah / 2 - 12, aw + 24, ah + 24);
+    g.restore();
+    // 말씀: 카드가 열린 뒤 곡의 70% 동안 한 글자씩
+    const typeEnd = Math.max(4, (total - 2.5) * .7), shown = Math.floor(chars.length * Math.max(0, Math.min(1, (sec - 1.6) / typeEnd)));
+    if (sec > 1.5) {
+      const by = Math.min(ay + ah - boxH * .55, 1420 - boxH), alpha = Math.min(1, (sec - 1.5) / .5);
+      g.globalAlpha = alpha; g.fillStyle = 'rgba(12,14,22,.72)'; g.beginPath(); g.roundRect ? g.roundRect(90, by, VW - 180, boxH, 28) : g.rect(90, by, VW - 180, boxH); g.fill(); g.globalAlpha = 1;
+      let left = shown; g.font = `700 ${fs}px 'Noto Serif KR', 'Noto Sans KR', serif`; g.fillStyle = '#fff'; g.textAlign = 'center';
+      lines.forEach((l, i) => { const part = [...l].slice(0, Math.max(0, left)).join(''); left -= [...l].length; if (part) g.fillText(part, VW / 2, by + 90 + i * lh); });
+      if (shown >= chars.length && ref) { g.fillStyle = '#fde68a'; g.font = "700 40px 'Noto Sans KR', sans-serif"; g.fillText('— ' + ref, VW / 2, by + boxH - 40); }
+    }
+    vidFoot(g, `🎨 ${cur.a.title} · ${STYLES[cur.style].e} ${STYLES[cur.style].ko}`, sec / total);
+  }, `JJ_verse_${cur.a.id}`, 3.4, { ax, ay, aw, ah });
+}
+
+// 🖍 색칠 과정 영상: 칠한 순서대로 다시 보여준 뒤, 그 색으로 만든 노래와 선 악보
+function clLogOf(id) { try { return JSON.parse(store('jjcm_clog_' + id) || '[]'); } catch (e) { return []; } }
+async function clVideo() {             // 색칠 화면에서: 지금 칠한 그림으로 노래를 만들고 영상까지
+  if (!CL) return;
+  const id = CL.a.id + 'c', src = CL.cv.toDataURL('image/png');
+  let it = ART.find(x => x.id === id); if (!it) { it = { id, base: CL.a.id, custom: true, title: CL.a.title + ' · 내 색칠' }; ART.push(it); }
+  it.src = src; clStore();
+  MODE = 'song'; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === 'song'));
+  openArt(id);
+  const wait = () => new Promise(r => { const t = setInterval(() => { if (cur && cur.a && cur.a.id === id && cur.song) { clearInterval(t); r(); } }, 150); setTimeout(() => { clearInterval(t); r(); }, 8000); });
+  await wait(); clVideoFromSong();
+}
+async function clVideoFromSong() {
+  const base = cur.a.base, log = clLogOf(base), done = $('art'), song = cur.song;
+  // 밑그림(선 도안) 준비: 색칠 화면이 열려 있으면 그대로, 아니면 원본 그림에서 다시
+  let LA = CL && CL.a && CL.a.id === base ? CL.LA : null;
+  if (!LA) { const src = (ART.find(a => a.id === base) || {}).src; const im = new Image(); im.crossOrigin = 'anonymous'; await new Promise(r => { im.onload = r; im.onerror = r; im.src = src; }); try { LA = lineArt(im, 640); } catch (e) {} }
+  const bg = vidBg(done), { aw, ah, ax, ay } = vidBox(done), P = song.path, title = cur.a.title.replace(' · 내 색칠', '');
+  // 칠한 순서대로 장면 만들기 (최대 60장)
+  const frames = [], cv = document.createElement('canvas');
+  if (LA && log.length) {
+    cv.width = LA.W; cv.height = LA.H; const cg = cv.getContext('2d');
+    const keep = CL, paint = new Uint8ClampedArray(LA.W * LA.H * 4).fill(255);
+    CL = { a: { id: base }, LA, paint, color: '', log: [], undo: [], undoLog: [] }; CL_REPLAY = true;
+    const snap = () => { const im = cg.createImageData(LA.W, LA.H), d = im.data; for (let i = 0; i < LA.W * LA.H; i++) { const o = i * 4; if (LA.line[i]) { d[o] = d[o + 1] = d[o + 2] = 40; } else { d[o] = paint[o]; d[o + 1] = paint[o + 1]; d[o + 2] = paint[o + 2]; } d[o + 3] = 255; } cg.putImageData(im, 0, 0); const f = document.createElement('canvas'); f.width = aw; f.height = ah; f.getContext('2d').drawImage(cv, 0, 0, aw, ah); frames.push(f); };
+    snap();
+    const every = Math.max(1, Math.ceil(log.length / 60));
+    try { log.forEach((a, i) => { CL.color = a.c; if (a.f) clFill(a.f[0], a.f[1]); else if (a.b) clBrush(a.b[0], a.b[1], a.b[2]); if ((i + 1) % every === 0 || i === log.length - 1) snap(); }); } catch (e) {}
+    CL_REPLAY = false; CL = keep;
+  }
+  const fin = document.createElement('canvas'); fin.width = aw; fin.height = ah; fin.getContext('2d').drawImage(done, 0, 0, aw, ah);
+  const sub = vidSub();
+  recordVideo(song, (g, beat, sec, total) => {
+    const replayEnd = Math.min(total * .45, Math.max(3, frames.length * .3)), inReplay = sec < replayEnd;
+    g.drawImage(bg, 0, 0); vidTitle(g, inReplay ? '🖍 내가 색칠했어요' : '🎵 내 색이 노래해요', title);
+    vidFrame(g, ax, ay, aw, ah);
+    if (inReplay && frames.length) g.drawImage(frames[Math.min(frames.length - 1, Math.floor(Math.max(0, sec) / replayEnd * frames.length))], ax, ay);
+    else if (inReplay) { g.drawImage(fin, ax, ay); g.fillStyle = 'rgba(255,255,255,' + (1 - Math.max(0, sec) / replayEnd) + ')'; g.fillRect(ax, ay, aw, ah); }
+    else { g.drawImage(fin, ax, ay); g.save(); g.beginPath(); g.rect(ax, ay, aw, ah); g.clip(); g.translate(ax, ay); drawArt(g, aw, ah, P, beat); g.restore(); }
+    nowLabel(g, P, beat); vidFoot(g, sub, sec / total);
+  }, `JJ_coloring_${base}`, 2.6, { ax, ay, aw, ah });
 }
 
 function toggle() {
